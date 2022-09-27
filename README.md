@@ -1,1 +1,1 @@
-# SoLaugh_project
+# SoLaugh
