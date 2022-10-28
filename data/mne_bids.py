@@ -1,7 +1,7 @@
 import mne
 import os
 from mne_bids import BIDSPath, write_raw_bids
-from params import DISK_PATH, BIDS_PATH, SUBJECTS, RUNS, EVENTS_ID
+from params import DISK_PATH, BIDS_PATH, EVENTS_ID
 
 
 # List of the directory for each participant
@@ -38,7 +38,8 @@ for old_file in folder_subj : # Go through S1, S2 etc...
                 task='NOISE'
                 datatype='meg',
                 extension='.ds' 
-                root=BIDS_PATH)
+                root=BIDS_PATH
+                )
 
             # Convert NOISE files into BIDS
             raw_fname = os.path.join(oldpath, CAfile)
@@ -54,9 +55,9 @@ for old_file in folder_subj : # Go through S1, S2 etc...
             if run == '01' or run == '06' :
                 task = 'RS'
             elif run in passive_run :
-                task = 'passive'
+                task = 'LaughterPassive'
             elif run in active_run :
-                task = 'active'
+                task = 'LaughterActive'
             
             laughter_bids_path = BIDSPath(                
                 subject=subj, 
@@ -64,13 +65,14 @@ for old_file in folder_subj : # Go through S1, S2 etc...
                 task=task
                 datatype='meg',
                 extension='.ds' 
-                root=BIDS_PATH) 
+                root=BIDS_PATH
+                ) 
                 
             # Convert laughter files into BIDS 
             raw_fname = os.path.join(oldpath, CAfile)
             raw = mne.io.read.cft(raw_fname)
 
-            if task == 'active' or task == 'passive':
+            if task == 'LaughterActive' or task == 'LaughterPassive':
                 events = mne.find_events(raw)
 
                 write_raw_bids(
@@ -92,7 +94,8 @@ for old_file in folder_subj : # Go through S1, S2 etc...
                 task='procedure'
                 datatype='meg',
                 extension='.ds' 
-                root=BIDS_PATH) 
+                root=BIDS_PATH
+                ) 
 
             # Convert procedure file into BIDS
             raw_fname = os.path.join(oldpath, CAfile)
