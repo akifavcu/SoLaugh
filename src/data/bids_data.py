@@ -28,14 +28,16 @@ for old_file in folder_subj : # Go through S1, S2 etc...
     file_list = os.listdir(old_path) 
     
     for CAfile in file_list : # Go through CA01_Laughter ...
-        subj_number = folder_subj[1:] # Remove the letter S : Not working
-        if len(subj_number) == 1 :
-            subj = '0' + subj_number
-        else :
-            subj = str(subj_number)
 
         # For NOISE file : Not working for now  
-        if 'NOISE_noise_' in CAfile :
+        if 'NOISE_noise_' in CAfile and not '.fif' in CAfile:
+        
+            subj_number = old_file[1:] # Remove the letter S : Not working
+            if len(subj_number) == 1 :
+                subj = '0' + subj_number
+            else :
+                subj = str(subj_number)    
+
             noise_bids_path = BIDSPath(
                 subject=subj,
                 task='NOISE',
@@ -89,22 +91,4 @@ for old_file in folder_subj : # Go through S1, S2 etc...
                     )
             else :
                 write_raw_bids(raw, bids_path=laughter_bids_path, overwrite = True)
-
-        # For procedure file
-        if 'procedure' in CAfile : 
-            subj = CAfile[2:4]
-            
-            procedure_bids_path = BIDSPath(                
-                subject=subj,
-                task='procedure',
-                session='procedure', 
-                datatype='meg',
-                extension='.ds', 
-                root=BIDS_PATH
-                ) 
-
-            # Convert procedure files into BIDS
-            raw_fname = os.path.join(old_path, CAfile)
-            raw = mne.io.read_raw_ctf(raw_fname)  
-            write_raw_bids(raw, bids_path=procedure_bids_path, overwrite = True)
 
