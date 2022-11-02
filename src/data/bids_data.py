@@ -10,6 +10,7 @@ folder_subj = os.listdir(DISK_PATH)
 folder_subj.remove('Cahier_manip_Laughter_MEG.pdf')
 folder_subj.remove('S28.zip')
 folder_subj.remove('S0_Pilote')
+folder_subj.remove('S17_removed') #subject remove from the task 
 
 passive_run = RUNS[1:5] # Select runs 02 to 05
 active_run = RUNS[6:13] # Select runs 07 to 12
@@ -29,10 +30,10 @@ for old_file in folder_subj : # Go through S1, S2 etc...
     
     for CAfile in file_list : # Go through CA01_Laughter ...
 
-        # For NOISE file : Not working for now  
+        # For NOISE file 
         if 'NOISE_noise_' in CAfile and not '.fif' in CAfile:
-        
-            subj_number = old_file[1:] # Remove the letter S : Not working
+
+            subj_number = old_file[1:] # Remove the letter S
             if len(subj_number) == 1 :
                 subj = '0' + subj_number
             else :
@@ -48,12 +49,12 @@ for old_file in folder_subj : # Go through S1, S2 etc...
                 )
 
             # Convert NOISE files into BIDS
-            raw_fname = os.path.join(old_path, CAfile)
-            raw = mne.io.read_raw_ctf(raw_fname)
-            write_raw_bids(raw, bids_path=noise_bids_path, overwrite = True)
+            noise_raw_fname = os.path.join(old_path, CAfile)
+            noise_raw = mne.io.read_raw_ctf(noise_raw_fname)
+            write_raw_bids(noise_raw, bids_path=noise_bids_path, overwrite = True)
    
         # For Task file
-        if 'Laughter' and '.ds' in CAfile and not '.zip' in CAfile :
+        if '_Laughter-' and '.ds' in CAfile and not '.zip' in CAfile and not 'NOISE' in CAfile and not 'procedure' in CAfile:
 
             subj = CAfile[2:4]
             run = CAfile[-5:-3]
@@ -91,4 +92,7 @@ for old_file in folder_subj : # Go through S1, S2 etc...
                     )
             else :
                 write_raw_bids(raw, bids_path=laughter_bids_path, overwrite = True)
-
+        
+        if 'NOISE' in CAfile and 'Trial' in CAfile :
+            continue
+        
