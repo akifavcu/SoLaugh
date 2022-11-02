@@ -4,16 +4,26 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from src.params import BIDS_PATH, SUBJ_LIST, ACTIVE_RUN
+from src.params import BIDS_PATH, SUBJ_LIST, ACTIVE_RUN, RESULT_PATH
 
+# check if RESULT_PATH/behavior/behavior exists, if not, create it
+BEHAV_PATH = RESULT_PATH + 'DISCRIMINATION/behavior/'
+
+if not os.path.isdir(BEHAV_PATH):
+    os.mkdir(BEHAV_PATH)
+    print("BEHAV folder created at : {}".format(BEHAV_PATH))
+else:
+    print("{} already exists.".format(BEHAV_PATH))
+
+# Initiate all list
 df_results = pd.DataFrame()
-
 subj_loop = []
 acc_list = []
 hit_false = []
 score = []
 laugh_type = []
 nb_resp = []
+laughter_predict = []
 
 for subj in SUBJ_LIST:
 
@@ -58,6 +68,7 @@ for subj in SUBJ_LIST:
                 score.append(0)
 
         # TODO : compute reaction time -> events[:, [0]]
+        # Compute reaction time
 
 #Compute the number of response
 for resp in hit_false :
@@ -66,18 +77,48 @@ for resp in hit_false :
 # Implement a multi-index table
 df = pd.DataFrame(data = {'Subject': subj_loop, 'Hit/False': hit_false, 'Score': score,
 'LaughType': laugh_type, 'NumberResponse': nb_resp})
-print(df.groupby(['Subject', 'Hit/False', 'LaughType']).count())
 
-# TODO : Export table into csv
+# Export table into csv
+df.to_csv(RESULT_PATH + 'discrimination_performance.csv')
 
-# Plot a graph
-# TODO : Try to find a way to do graph with seaborn
-
-#sns.boxplot(data = df, x = 'Hit/False', y = 'NumberResponse') 
-#plt.show()
-
-grouped = df.groupby(['Subject', 'Hit/False', 'LaughType']).count()
-grouped.boxplot(column = 'NumberResponse', by = ['Hit/False'])
+# Plot graph showing differences between hit and false
+grouped_hit_false = df.groupby(['Subject', 'Hit/False', 'LaughType']).count()
+grouped_hit_false.boxplot(column = 'NumberResponse', by = ['Hit/False'])
+plt.ylabel('Number of answer')
+plt.title('Overall performance')
+plt.savefig(BEHAV_PATH + 'discrimination_performance-hit-false.png')
 plt.show()
 
-# TODO : Save figures
+# Plot graph showing differences between laughter type performance
+grouped_real_posed = df.groupby(['Subject', 'Hit/False', 'LaughType']).count()
+grouped_real_posed.boxplot(column = 'NumberResponse', by = ['Hit/False', 'LaughType'])
+plt.ylabel('Number of answer')
+plt.title('Performance for each type of laughter')
+plt.savefig(BEHAV_PATH + 'discrimination_performance-real-posed.png')
+plt.show()
+
+# Plot a confusion matrix
+for i, resp in enumerate(df['Score']) :
+    if resp == 0 :
+        if df['LaughType'][i] == 'Real' :
+            laughter_predict.append('Posed')
+        elif df['LaughType'][i] == 'Posed' :
+            laughter_predict.append('Real')
+    elif resp == 1 :
+        if df['LaughType'][i] == 'Real' :
+            laughter_predict.append('Real')
+        elif df['LaughType'][i] == 'Posed' :
+            laughter_predict.append('Posed')
+
+df['LaughPredict'] = laughter_predict
+
+df['y_actual'] = df['LaughType'].map({'Real': 1, 'Posed': 0})
+df['y_predicted'] = df['LaughPredict'].map({'Real': 1, 'Posed': 0})
+
+confusion_matrix = pd.crosstab(df['y_actual'], df['y_predicted'], rownames=['Actual'], 
+                    colnames=['Predicted'])
+
+print(confusion_matrix)
+sns.heatmap(confusion_matrix, annot=True)
+plt.savefig(BEHAV_PATH + 'confusion_matrix_real-posed.png')
+plt.show()
