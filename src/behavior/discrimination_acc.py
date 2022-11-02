@@ -4,16 +4,8 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from src.params import BIDS_PATH, SUBJ_LIST, ACTIVE_RUN
 
-# Import data -> to put in params
-
-path = '/run/media/claraek/Clara_Seagate/SoLaugh_MSc/0_RAW_DATA/'
-
-all_run = [str(i).zfill(2) for i in range(7, 13)]
-#all_run = ['07']
-
-# subj_list = [str(i) for i in list(range(1,17))+[18,19,20,21,22,23,25,28,29,30,32]]
-subj_list = [1, 2]
 df_results = pd.DataFrame()
 
 subj_loop = []
@@ -23,22 +15,24 @@ score = []
 laugh_type = []
 nb_resp = []
 
-for subj in subj_list:
+for subj in SUBJ_LIST:
 
-    for run in all_run:
+    for run in ACTIVE_RUN:
 
         # Read raw file
-        filename = 'S{}/CA0{}_Laughter-kjerbi_20161013_{}.ds'.format(subj, subj, run)
-        fname = os.path.join(path, filename)
+        filename = 'sub-{}/ses-recording/meg/sub-{}_ses-recording_task-LaughterActive_run-{}_meg.ds'.format(subj, subj, run)
+        fname = os.path.join(BIDS_PATH, filename)
         raw = mne.io.read_raw_ctf(fname)
 
         # Find events
         events = mne.find_events(raw, initial_event=False)
         events_corrected = list(events[:, [2]])
 
-        # Find miss response
-        for i, miss in enumerate(events_corrected) :
-            if miss == 5 and (events_corrected[i+1] == 11 or events_corrected[i+1] == 12): 
+        # Interpolate missing answers
+        for i, ev in enumerate(events_corrected) :
+            if i == (len(events_corrected)-1) and ev == 5 :
+                events_corrected.insert(i+1, [66])
+            elif ev == 5 and (events_corrected[i+1] == 11 or events_corrected[i+1] == 12): 
                 # Add False where response is missing
                 events_corrected.insert(i+1, [66])
 

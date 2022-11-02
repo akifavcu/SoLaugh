@@ -1,7 +1,8 @@
 import mne
 import os
 from mne_bids import BIDSPath, write_raw_bids
-from src.params import DISK_PATH, BIDS_PATH, EVENTS_ID, RUNS
+from src.params import DISK_PATH, BIDS_PATH, EVENTS_ID
+from src.params import ACTIVE_RUN, PASSIVE_RUN
 
 # List of the directory for each participant
 folder_subj = os.listdir(DISK_PATH) 
@@ -12,8 +13,6 @@ folder_subj.remove('S28.zip')
 folder_subj.remove('S0_Pilote')
 folder_subj.remove('S17_removed') #S17 did not finish task
 
-passive_run = RUNS[1:5] # Select runs 02 to 05
-active_run = RUNS[6:13] # Select runs 07 to 12
 
 # check if BIDS_PATH exists, if not, create it
 if not os.path.isdir(BIDS_PATH):
@@ -65,9 +64,9 @@ for old_file in folder_subj :
             # Associate run with task
             if run == '01' or run == '06' :
                 task = 'RS'
-            elif run in passive_run :
+            elif run in PASSIVE_RUN :
                 task = 'LaughterPassive'
-            elif run in active_run :
+            elif run in ACTIVE_RUN :
                 task = 'LaughterActive'
             
             laughter_bids_path = BIDSPath(                

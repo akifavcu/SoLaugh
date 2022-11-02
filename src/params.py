@@ -3,8 +3,14 @@ DISK_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_AL/0_RAW_DATA/'
 BIDS_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_MSc/BIDS_DATA/'
 
 # Task parameters
-SUBJECTS = [str(i).zfill(2) for i in range(0, 33)] # Need to remove participant 17
-RUNS = [str(i).zfill(2) for i in range(1, 13)]
+SUBJ_LIST = [str(i).zfill(2) for i in range(1, 33)] 
+SUBJ_LIST.remove('17') #S17 did not finish the task
+
+RUN_LIST = [str(i).zfill(2) for i in range(1, 13)]
+PASSIVE_RUN = RUN_LIST[1:5] # Select runs 02 to 05
+ACTIVE_RUN = RUN_LIST[6:13] # Select runs 07 to 12
+RS_RUN = ['01', '06'] # Resting state
+
 EVENTS_ID = {'LaughReal' : 11, 'LaughPosed' : 12, 'Good' : 99, 'Bad' : 66, 
             'OffSet' : 5, 'EnvReal' : 21, 'ScraReal' : 31, 'EnvPosed' : 22,
             'ScraPosed' : 32, 'Start' : 68}
