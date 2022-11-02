@@ -1,6 +1,7 @@
 # Paths 
 DISK_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_AL/0_RAW_DATA/'
 BIDS_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_MSc/BIDS_DATA/'
+RESULT_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_MSc/RESULTS/'
 
 # Task parameters
 SUBJ_LIST = [str(i).zfill(2) for i in range(1, 33)] 
