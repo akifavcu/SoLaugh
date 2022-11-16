@@ -14,34 +14,35 @@ def all_perf_data(perf_path) :
         if '.csv' in subj_perf : 
             df_subj = pd.read_csv(perf_path + subj_perf)
             df_data = pd.concat([df_data, df_subj])
-    df_data['nb_resp'] = 1   
+    df_data['nb_resp'] = 1  
 
     # Export table into csv
-    df_data.to_csv(BEHAV_PATH + 'discrimination_performance.csv')
+    df_data.to_csv(BEHAV_PATH + 'discrimination_performance.csv', index = False)
     return df_data
 
 def plot_perf(df) : 
 
     '''TODO'''
 
-    # TODO : Change variables to plot 
+    # Remove the response 'none'
+    df_clean = df[df['response'].str.contains('none') == False]
+
     # Plot differences between hit and false
-    grouped_hit_false = df.groupby(['subID', 'response', 'active_laughType']).count()
-    grouped_hit_false.boxplot(column = 'nb_resp', by = ['response'])
+    grouped = df_clean.groupby(['subID', 'response', 'active_laughType']).count()
+    grouped.boxplot(column = 'nb_resp', by = ['response'])
     plt.ylabel('Number of answer')
     plt.title('Overall performance')
     plt.savefig(BEHAV_PATH + 'discrimination_performance-hit-false.png')
     plt.show()
 
     # Plot differences between laughter type performance
-    grouped_real_posed = df.groupby(['subID', 'response', 'active_laughType']).count()
-    grouped_real_posed.boxplot(column = 'nb_resp', by = ['response', 'active_laughType'])
+    grouped.boxplot(column = 'nb_resp', by = ['response', 'active_laughType'])
     plt.ylabel('Number of answer')
     plt.title('Performance for each type of laughter')
     plt.savefig(BEHAV_PATH + 'discrimination_performance-real-posed.png')
     plt.show()
 
-    return grouped_hit_false, grouped_real_posed
+    return grouped
 
 if __name__ == '__main__' :
 
@@ -54,6 +55,6 @@ if __name__ == '__main__' :
 
     df_data = all_perf_data(PERF_PATH)
 
-    grouped_hit_false, grouped_real_posed = plot_perf(df_data)
+    df_grouped= plot_perf(df_data)
 
 
