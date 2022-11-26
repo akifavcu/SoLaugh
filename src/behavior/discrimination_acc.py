@@ -1,8 +1,9 @@
 import mne
-import numpy as np
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+from scipy import stats
 from src.params import PERF_PATH, BEHAV_PATH
 
 def all_perf_data(perf_path) :
@@ -32,17 +33,33 @@ def plot_perf(df) :
     grouped.boxplot(column = 'nb_resp', by = ['response'])
     plt.ylabel('Number of answer')
     plt.title('Overall performance')
-    plt.savefig(BEHAV_PATH + 'discrimination_performance-hit-false.png')
-    plt.show()
+    plt.savefig(BEHAV_PATH + 'discrimination_performance-response.png')
+    #plt.show()
 
     # Plot differences between laughter type performance
     grouped.boxplot(column = 'nb_resp', by = ['response', 'active_laughType'])
     plt.ylabel('Number of answer')
     plt.title('Performance for each type of laughter')
     plt.savefig(BEHAV_PATH + 'discrimination_performance-real-posed.png')
-    plt.show()
+    #plt.show()
 
-    return grouped
+    return grouped, df_clean
+
+def performance(df) :
+    real_laughter = df[df['active_laughType'].str.contains('real') == True]
+    posed_laughter = df[df['active_laughType'].str.contains('posed') == True]
+    
+    correct_resp = 0
+    for resp in df['response'] :
+        if resp == 'correct' :
+            correct_resp += 1
+
+    correct_acc = (correct_resp*100)/len(df)
+    print(correct_acc)
+
+    posed_real_acc = 0 
+
+    return posed_real_acc, correct_acc
 
 if __name__ == '__main__' :
 
@@ -55,6 +72,8 @@ if __name__ == '__main__' :
 
     df_data = all_perf_data(PERF_PATH)
 
-    df_grouped= plot_perf(df_data)
+    df_grouped, df_clean = plot_perf(df_data)
+
+    posed_real_acc, correct_acc = performance(df_clean)
 
 

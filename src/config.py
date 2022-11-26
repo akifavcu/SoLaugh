@@ -31,22 +31,25 @@ from mne_bids_pipeline._logging import gen_log_kwargs
 from src.params import BIDS_PATH, PREPROC_PATH
 
 interactive = True
+debug = True
 
 study_name = 'Solaugh'
-bids_root = BIDS_PATH
-deriv_root = PREPROC_PATH
+bids_root = '/run/media/claraek/Clara_Seagate/bids_mne/'
+deriv_root = '/run/media/claraek/Clara_Seagate/test_mne_bibs_pipeline/'
 
-subjects = ['01'] #if 'all' include all subjects
+subjects = ['02'] #if 'all' include all subjects
 sessions = ['recording']
 
 task = 'LaughterActive'
-runs = ['07']
+runs = ['07'] 
 
 find_flat_channels_meg = False
 find_noisy_channels_meg = False
 use_maxwell_filter = False
 ch_types = ['mag']
+data_type = 'meg'
 eog_channels = ['EEG057', 'EEG058']
+
 # ecg_channels = ['EEG059']
 mf_cal_fname = None
 l_freq = 1.
@@ -60,19 +63,19 @@ ica_l_freq = 1.
 ica_n_components = 0.99
 ica_reject_components = 'auto'
 
-# Epochs
-epochs_tmin = -1.5
-epochs_tmax = 4.0
+# Epochs => Issue here
+epochs_tmin = -0.5
+epochs_tmax = 1.0
 baseline = (None, 0)
-contrasts = [('LaughReal', 'LaughPosed')]
 
 # Conditions / events to consider when epoching
-conditions = ['LaughReal', 'LaughPosed', 'Good', 'Bad']
+conditions = ['LaughPosed', 'LaughReal']
 event_repeated = 'drop'
 
-# Noise estimation => select noise-session
-process_empty_room = False
-#noise_cov = 'emptyroom'
+# Noise estimation
+process_empty_room = True
+noise_cov = 'emptyroom'
 
 # Decoding
-decode = False
+decode = True
+contrasts = [('LaughReal', 'LaughPosed')]
