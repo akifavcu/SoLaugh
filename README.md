@@ -1,1 +1,1 @@
-# SoLaugh
+# Laughter-meg project
