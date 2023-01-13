@@ -1,10 +1,10 @@
 # Paths 
-DISK_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_AL/0_RAW_DATA/'
-BIDS_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_MSc/BIDS_DATA/'
-RESULT_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_MSc/RESULTS/'
-PREPROC_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_MSc/PREPROC/'
-PERF_PATH = '/run/media/claraek/Clara_Seagate/SoLaugh_MSc/PERF/solaugh_task/results_active/'
-BEHAV_PATH = RESULT_PATH + 'DISCRIMINATION/behavior/'
+DISK_PATH = '/run/media/clara_elk/Clara_Seagate/SoLaugh_AL/0_RAW_DATA/'
+BIDS_PATH = '/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/bids_data/'
+RESULT_PATH = '/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/results/'
+PREPROC_PATH = '/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/preproc/'
+PERF_PATH = '/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/PERF/solaugh_task/results_active/'
+BEHAV_PATH = RESULT_PATH + 'discrimination/behavior/'
 
 # Task parameters
 SUBJ_LIST = [str(i).zfill(2) for i in range(1, 33)] 
