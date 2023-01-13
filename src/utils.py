@@ -1,7 +1,7 @@
 import os
-from src.params import BIDS_PATH, ACTIVE_RUN, PASSIVE_RUN, PREPROC_PATH
+from src.params import ACTIVE_RUN, PASSIVE_RUN, PREPROC_PATH
 
-def bids_files(BIDS_PATH, subj, run, stage) :
+def get_bids_file(BIDS_PATH, subj, run, stage) :
     # Step 1 : get all parameters of the file name : subj, session, task
     # Step 2 : stage gives us the extension and at what step in the processing we are => extension file
     # Step 3 : put all the information in var laughter_bidsname
@@ -16,16 +16,13 @@ def bids_files(BIDS_PATH, subj, run, stage) :
     elif run in PASSIVE_RUN :
         task = "LaughterPassive"
 
-    # Find the extension of the file
-
-
     # Raw data 
     if  stage == "raw":
         laughter_bidsname = "sub-{}_ses-recording_task-{}_run-{}_meg.ds".format(subj, task, run)
         laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), 
         "ses-recording", "meg", laughter_bidsname)
 
-    # For preprocessed data 
+    # Preprocessed data 
     elif (stage == "ave"  
     or stage == "epo" 
     or stage == "ica"
@@ -36,13 +33,15 @@ def bids_files(BIDS_PATH, subj, run, stage) :
         extension = ".fif"
 
         laughter_bidsname = "sub-{}_ses-recording_task-{}_{}{}".format(subj, task, stage, extension)
-        laughter_bidspath = os.path.join(PREPROC_PATH, "sub-{}".format(subj), 
+        laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), 
         "ses-recording", "meg", laughter_bidsname)
     
     elif stage == "filt_raw" :
         extension = ".fif"
         laughter_bidsname = "sub-{}_ses-recording_task-{}_run-{}_{}{}".format(subj, task, run, stage, extension)
-        laughter_bidspath = os.path.join(PREPROC_PATH, "sub-{}".format(subj), 
+        laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), 
         "ses-recording", "meg", laughter_bidsname)
-    # For analysis
+    
+    # Analysed data
+
     return laughter_bidspath

@@ -19,7 +19,7 @@ subjects = ['02'] # if 'all' include all subjects
 sessions = ['recording']
 
 task = 'LaughterActive'
-runs = ['07', '08', '09', '10', '11', '12'] # Active runs = ['07', '08', '09', '10', '11', '12']
+runs = ['07'] # Active runs = ['07', '08', '09', '10', '11', '12']
 
 find_flat_channels_meg = False
 find_noisy_channels_meg = False
@@ -32,6 +32,7 @@ eog_channels = ['EEG057', 'EEG058']
 mf_cal_fname = None
 l_freq = 1.
 h_freq = 120. # Need to notch at 60 Hz
+notch_freq = [60, 120]
 #raw_resample_sfreq = 250
 
 # Artifact correction.
