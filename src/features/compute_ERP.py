@@ -168,10 +168,10 @@ if __name__ == "__main__" :
     picks = "meg" # Select MEG channels
     event_id = {'LaughReal' : 11, 'LaughPosed' : 12}
     # Compute ERPs
-    #condition1, condition2 = ERP(PREPROC_PATH, subj_list, run_list, cond1, cond2, "epo")
+    condition1, condition2 = ERP(PREPROC_PATH, subj_list, run_list, cond1, cond2, "epo")
 
     # Plot ERPs
-    #plot_ERP(condition1, condition2, cond1, cond2, picks)
+    plot_ERP(condition1, condition2, cond1, cond2, picks)
 
     # Compute ERP clusters
     # For now N = 1, need to check with more participants    
