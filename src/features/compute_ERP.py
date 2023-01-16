@@ -85,7 +85,7 @@ def visualize_cluster(epochs, F_obs, clusters, p_values, event_id) :
     # Code adapted from :
     # https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
     
-    p_accept = 0.05
+    p_accept = 0.5
     good_cluster_inds = np.where(p_values < p_accept)[0]
 
     # configure variables for visualization
@@ -139,10 +139,9 @@ def visualize_cluster(epochs, F_obs, clusters, p_values, event_id) :
         title = 'Cluster #{0}, {1} sensor'.format(i_clu + 1, len(ch_inds))
         if len(ch_inds) > 1:
             title += "s (mean)"
-        plot_compare_evokeds(evokeds, title=title, picks=["mag"], axes=ax_signals,
+        plot_compare_evokeds(evokeds, title=title, picks=ch_inds, axes=ax_signals,
                             colors=colors, linestyles=None, show=False,
                             split_legend=True, truncate_yaxis='auto')
-        #TODO : need to check if picks="mag" is ok 
         # plot temporal cluster extent
         ymin, ymax = ax_signals.get_ylim()
         ax_signals.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
