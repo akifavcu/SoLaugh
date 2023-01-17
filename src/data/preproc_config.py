@@ -1,12 +1,11 @@
-# TODO : Check if this command works for preprocessing
 import matplotlib
+from src.params import BIDS_PATH, PREPROC_PATH, ACTIVE_RUN
+
 matplotlib.use('agg')
 
 ###############################################################################
 # Config parameters
 # -----------------
-
-from src.params import BIDS_PATH, PREPROC_PATH
 
 interactive = True
 on_error = 'debug'
@@ -15,11 +14,11 @@ study_name = 'Solaugh'
 bids_root = BIDS_PATH
 deriv_root = PREPROC_PATH
 
-subjects = ['02'] # if 'all' include all subjects
+subjects = ['03'] # if 'all' include all subjects
 sessions = ['recording']
 
 task = 'LaughterActive'
-runs = ['07'] # Active runs = ['07', '08', '09', '10', '11', '12']
+runs = ACTIVE_RUN
 
 find_flat_channels_meg = False
 find_noisy_channels_meg = False
@@ -62,3 +61,6 @@ contrasts = [('LaughReal', 'LaughPosed')]
 # Time-frequency analysis 
 time_frequency_conditions = ['LaughPosed', 'LaughReal']
 decoding_csp = False
+
+# Source reconstruction
+run_source_estimation = False
