@@ -1,6 +1,8 @@
 import matplotlib
-from src.params import BIDS_PATH, PREPROC_PATH, ACTIVE_RUN
+from src.params import BIDS_PATH, PREPROC_PATH, ACTIVE_RUN, PASSIVE_RUN
+import sys
 
+print(sys.argv)
 matplotlib.use('agg')
 
 ###############################################################################
@@ -14,11 +16,30 @@ study_name = 'Solaugh'
 bids_root = BIDS_PATH
 deriv_root = PREPROC_PATH
 
-subjects = ['03'] # if 'all' include all subjects
+# Take arguments if exist
+list_argv = sys.argv
+
+arg_task = "LaughterActive" #task by default
+subj = '03'  # subject by default
+
+for argument in list_argv :
+    if "--subject=" in argument :
+        subj = argument[-2:]
+
+    if "--task=" in argument :
+        arg_task = argument[7:]
+
+print("Process subject :", subj, "& compute task :", arg_task)
+
+subjects = subj 
 sessions = ['recording']
 
-task = 'LaughterActive'
-runs = ACTIVE_RUN
+task = arg_task # task by default
+
+if task == 'LaughterActive': 
+    runs = ACTIVE_RUN
+elif task == 'LaughterPassive' :
+    runs = PASSIVE_RUN  
 
 find_flat_channels_meg = False
 find_noisy_channels_meg = False
@@ -26,6 +47,10 @@ use_maxwell_filter = False
 ch_types = ['mag']
 data_type = 'meg'
 eog_channels = ['EEG057', 'EEG058']
+
+# Noise estimation
+process_empty_room = False
+#noise_cov = 'emptyroom'
 
 # Filtering
 mf_cal_fname = None
@@ -47,20 +72,29 @@ epochs_tmax = 1.5
 baseline = (None, 0)
 
 # Conditions / events to consider when epoching
-conditions = ['LaughPosed', 'LaughReal']
-event_repeated = 'drop'
+if task == "LaughterActive" : 
+    conditions = ['LaughPosed', 'LaughReal']
+    event_repeated = 'drop'
 
-# Noise estimation
-process_empty_room = False
-#noise_cov = 'emptyroom'
+    # Decoding
+    decode = True
+    contrasts = [('LaughReal', 'LaughPosed')]
 
-# Decoding
-decode = True
-contrasts = [('LaughReal', 'LaughPosed')]
+    # Time-frequency analysis 
+    time_frequency_conditions = ['LaughPosed', 'LaughReal']
+    decoding_csp = False
 
-# Time-frequency analysis 
-time_frequency_conditions = ['LaughPosed', 'LaughReal']
-decoding_csp = False
+elif task == "LaughterPassive" :
+    conditions = ['EnvReal', 'ScraReal', 'EnvPosed','ScraPosed']
+    event_repeated = 'drop'
+    
+    # Decoding
+    decode = True
+    contrasts = [('EnvReal', 'ScraReal', 'EnvPosed','ScraPosed')]
+
+    # Time-frequency analysis 
+    time_frequency_conditions = ['EnvReal', 'ScraReal', 'EnvPosed','ScraPosed']
+    decoding_csp = False
 
 # Source reconstruction
 run_source_estimation = False
