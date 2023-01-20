@@ -12,20 +12,21 @@ from mne.channels import find_ch_adjacency
 from mne.viz import plot_compare_evokeds
 
 # Will be moved in another file later
-def ERP(PREPROC_PATH, subj_list, cond1, cond2, stage) :
+def ERP(PREPROC_PATH, subj_list, run_list, cond1, cond2, stage) :
     
     epochs_concat = []
 
     for subj in subj_list :
-        epochs_file = get_bids_file(PREPROC_PATH, subj, stage)
-        epochs = mne.read_epochs(epochs_file)
-        print(epochs.info)
+        for run in run_list :
+            epochs_file = get_bids_file(PREPROC_PATH, subj, run, stage)
+            epochs = mne.read_epochs(epochs_file)
+            print(epochs.info)
 
-        # Average each condition
-        condition1 = epochs[cond1].average()
-        condition2 = epochs[cond2].average()
+            # Average each condition
+            condition1 = epochs[cond1].average()
+            condition2 = epochs[cond2].average()
 
-        epochs_concat = mne.concatenate_epochs(epochs) # See if problem with head location
+            epochs_concat = mne.concatenate_epochs([epochs]) # See if problem with head location
 
     return condition1, condition2, epochs_concat
 
@@ -163,7 +164,7 @@ def visualize_cluster(epochs, F_obs, clusters, p_values, event_id) :
 if __name__ == "__main__" :
     
     # Select subjects and runs and stage
-    subj_list = ["02"]
+    subj_list = ["01", "02"]
     run_list = ["07"]
     stage = "epo"
 
@@ -174,7 +175,7 @@ if __name__ == "__main__" :
     event_id = {'LaughReal' : 11, 'LaughPosed' : 12}
 
     # Compute ERPs
-    condition1, condition2, epochs_concat = ERP(PREPROC_PATH, subj_list, cond1, cond2, "epo")
+    condition1, condition2, epochs_concat = ERP(PREPROC_PATH, subj_list, run_list, cond1, cond2, "epo")
 
     # Plot ERPs
     plot_ERP(condition1, condition2, cond1, cond2, picks)
@@ -183,4 +184,4 @@ if __name__ == "__main__" :
     F_obs, clusters, p_values = cluster_ERP(epochs_concat, event_id)
 
     # Visualization of ERP clusters
-    fig = visualize_cluster(epochs, F_obs, clusters, p_values, event_id)
+    fig = visualize_cluster(epochs_concat, F_obs, clusters, p_values, event_id)
