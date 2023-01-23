@@ -78,7 +78,7 @@ def cluster_ERP(epochs, event_id) :
     f_thresh = scipy.stats.f.ppf(1 - alpha_cluster_forming, dfn=dfn, dfd=dfd)
 
     # run the cluster based permutation analysis
-    cluster_stats = spatio_temporal_cluster_test(X, n_permutations=50,
+    cluster_stats = spatio_temporal_cluster_test(X, n_permutations=100,
                                                 threshold=f_thresh, tail=tail,
                                                 n_jobs=None, buffer_size=None,
                                                 adjacency=None)
@@ -91,7 +91,7 @@ def visualize_cluster(epochs, F_obs, clusters, p_values, event_id) :
     # Code adapted from :
     # https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
     
-    p_accept = 0.5
+    p_accept = 0.01
     good_cluster_inds = np.where(p_values < p_accept)[0]
 
     # configure variables for visualization
