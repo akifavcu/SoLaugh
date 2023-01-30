@@ -20,7 +20,10 @@ def all_perf_data(perf_path) :
 
     # Export table into csv
     df_data.to_csv(BEHAV_PATH + 'subj-all_task-LaughterActive.csv', index = False)
-    return df_data
+
+    # Remove the response 'none'
+    df_clean = df_data[df_data['response'].str.contains('none') == False]
+    return df_data, df_clean
 
 def compute_RT(df, df_performance) :
     # Need to compute reaction time
@@ -128,26 +131,41 @@ def plot_perf(df) :
 
     '''TODO'''
 
-    # Remove the response 'none'
-    df_clean = df[df['response'].str.contains('none') == False]
+    grouped_laugh = df.groupby(['subID', 'response', 'active_laughType']).count()
+    print(grouped_laugh.head())
+
+    grouped_RT = df.groupby(['subID', 'response', 'active_laughType']).mean()
+    print(grouped_RT.head())
 
     # Plot differences between hit and false
-    grouped = df_clean.groupby(['subID', 'response', 'active_laughType']).count()
-    grouped.boxplot(column = 'nb_resp', by = ['response'])
+    grouped_laugh.boxplot(column = 'nb_resp', by = ['response'])
     plt.ylabel('Number of answer')
     plt.title('Overall performance')
     plt.savefig(BEHAV_PATH + 'discrimination_performance-response.png')
     #plt.show()
 
     # Plot differences between laughter type performance
-    grouped.boxplot(column = 'nb_resp', by = ['response', 'active_laughType'])
+    grouped_laugh.boxplot(column = 'nb_resp', by = ['response', 'active_laughType'])
     plt.ylabel('Number of answer')
     plt.title('Performance for each type of laughter')
     plt.savefig(BEHAV_PATH + 'discrimination_performance-real-posed.png')
     #plt.show()
 
-    # TODO : plot RT
-    return grouped, df_clean
+    # Plot differences between RT for each laughter types
+    grouped_RT.boxplot(column = 'RT', by = ['active_laughType'])
+    plt.ylabel('RT (sec)')
+    plt.title('RT for each type of laughter')
+    plt.savefig(BEHAV_PATH + 'discrimination_RT-real-posed.png')
+    #plt.show()
+
+    # Plot differences between RT for correct and error responses
+    grouped_RT.boxplot(column = 'RT', by = ['response'])
+    plt.ylabel('RT (sec)')
+    plt.title('RT for each response category')
+    plt.savefig(BEHAV_PATH + 'discrimination_RT-correct-error.png')
+    #plt.show()
+
+    return grouped_laugh, grouped_RT
 
 
 if __name__ == '__main__' :
@@ -159,15 +177,15 @@ if __name__ == '__main__' :
     else:
         print('{} already exists.'.format(BEHAV_PATH))
 
-    df_data = all_perf_data(PERF_PATH)
-
-    df_grouped, df_clean = plot_perf(df_data)
+    df_data, df_clean = all_perf_data(PERF_PATH)
 
     df_performance = compute_performance(df_clean)
 
-    correct_RT, error_RT, lreal_RT, lposed_RT, df_performance = compute_RT(df_data, df_performance)
+    correct_RT, error_RT, lreal_RT, lposed_RT, df_performance = compute_RT(df_clean, df_performance)
 
     stats_RT_correct_error, stats_RT_laughter = stat_RT(correct_RT, error_RT, lreal_RT, lposed_RT)
+
+    df_grouped_laugh, df_grouped_RT = plot_perf(df_clean)
 
     # Save final df performance with all info
     df_performance.to_csv(BEHAV_PATH + 'subj-all_task-LaughterActive_performance_correct.csv', index = False)       
