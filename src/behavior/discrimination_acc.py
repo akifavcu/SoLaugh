@@ -11,7 +11,6 @@ from scipy import stats
 from src.params import PERF_PATH, BEHAV_PATH
 from statsmodels.stats.anova import AnovaRM
 
-
 def all_perf_data(perf_path) :
 
     '''
@@ -35,40 +34,7 @@ def all_perf_data(perf_path) :
 
     return df_data, df_clean
 
-def compute_RT(df, df_performance) :
-
-    ''' TODO '''
-
-    # Need to compute reaction time
-    # Take reaction time
-    # Take RT for correct and wrong answers
-    mean_RT = np.mean(df['RT'])
-    std_RT = stats.tstd(df['RT'])
-    print('Moyenne RT :', mean_RT)
-    print('STD RT :', std_RT)
-
-    correct_df = df[df['response'].str.contains('correct') == True]
-    correct_RT = correct_df['RT']
-
-    error_df = df[df['response'].str.contains('error') == True]
-    error_RT = error_df['RT']
-
-    # Take RT for both laughter
-    lreal_df = df[df['active_laughType'].str.contains('real') == True]
-    lreal_RT = lreal_df['RT']
-
-    lposed_df = df[df['active_laughType'].str.contains('posed') == True]
-    lposed_RT = lposed_df['RT']
-
-    # TODO : Save mean and STD RT 
-    dict_RT = {'mean_RT' : mean_RT,
-                'std_RT' : std_RT}
-    df_save_RT = pd.DataFrame(list(dict_RT.items()))
-    df_performance = pd.concat([df_performance, df_save_RT])
-
-    return correct_RT, error_RT, lreal_RT, lposed_RT, df_performance
-
-def compute_performance(df) :
+def compute_performance_and_RT(df) :
     
     ''' TODO '''
 
@@ -83,29 +49,29 @@ def compute_performance(df) :
 
     df['correct_count'] = correct_count
 
-    real_laughter = df[df['active_laughType'].str.contains('real') == True]
-    posed_laughter = df[df['active_laughType'].str.contains('posed') == True]
+    df_real_laughter = df[df['active_laughType'].str.contains('real') == True]
+    df_posed_laughter = df[df['active_laughType'].str.contains('posed') == True]
     
     # Compute the number and the % of correct answer in total
     sum_all = df['correct_count'].sum()
-    print('Nb of correct answer in total :', sum_all)
+    print('Overall nb of correct answer:', sum_all)
 
     # Compute the % of correct answers in total
     perc_all = (sum_all*100)/len(df)
 
-    print('Percentage of correct answers in total :', perc_all)
+    print('Overall percentage of correct answers:', perc_all, '\n')
 
     # Compute the number of correct answer for each laughter
-    sum_real = real_laughter['correct_count'].sum()
-    sum_posed = posed_laughter['correct_count'].sum()
-    print('Nb of correct answer for real laughter :', sum_real)
-    print('Nb of correct answer for posed laughter :', sum_posed)
+    sum_real = df_real_laughter['correct_count'].sum()
+    sum_posed = df_posed_laughter['correct_count'].sum()
+    print('Nb of correct answer for real laughter:', sum_real)
+    print('Nb of correct answer for posed laughter:', sum_posed, '\n')
 
     # Compute the % of correct answers for each laughter
-    perc_real = (sum_real*100)/len(real_laughter)
-    perc_posed = (sum_posed*100)/len(posed_laughter)
-    print('Percentage of correct answers for real laughter :', perc_real)
-    print('Percentage of correct answers for posed laughter :', perc_posed)
+    perc_real = (sum_real*100)/len(df_real_laughter)
+    perc_posed = (sum_posed*100)/len(df_posed_laughter)
+    print('Percentage of correct answers for real laughter:', perc_real)
+    print('Percentage of correct answers for posed laughter:', perc_posed, '\n')
 
     # Save results in csv files
     dict_perf = {'nb_correct_all' : sum_all, 
@@ -116,9 +82,58 @@ def compute_performance(df) :
                 'percentage_correct_posed' : perc_posed}
 
     df_performance = pd.DataFrame(list(dict_perf.items()), columns = ['performance', 'values'])      
+
+    # Compute mean and STD of reaction times
+    mean_RT = np.mean(df['RT'])
+    std_RT = stats.tstd(df['RT'])
+    print('Moyenne RT :', mean_RT)
+    print('STD RT :', std_RT)
+
+    correct_df = df[df['response'].str.contains('correct') == True]
+    error_df = df[df['response'].str.contains('error') == True]
+
+    correct_mean_RT = np.mean(correct_df['RT'])
+    correct_std_RT = stats.tstd(correct_df['RT'])
+    print('Moyenne RT correct:', correct_mean_RT)
+    print('STD RT correct:', correct_std_RT)
+    
+    error_mean_RT = np.mean(error_df['RT'])
+    error_std_RT = stats.tstd(error_df['RT'])
+    print('Moyenne RT error:', error_mean_RT)
+    print('STD RT error:', error_std_RT)
+
+    # Take RT for both laughter
+    real_RT = df_real_laughter['RT']
+    posed_RT = df_posed_laughter['RT']
+    
+    real_mean_RT = np.mean(df_real_laughter['RT'])
+    real_std_RT = stats.tstd(df_real_laughter['RT'])
+    print('Moyenne RT real laughter:', mean_RT)
+    print('STD RT real laughter:', std_RT)
+    
+    posed_mean_RT = np.mean(df_posed_laughter['RT'])
+    posed_std_RT = stats.tstd(df_posed_laughter['RT'])
+    print('Moyenne RT posed laughter:', mean_RT)
+    print('STD RT posed laughter :', std_RT)
+
+    # Save Mean and STD in a csv file
+    dict_RT = {'mean_RT' : mean_RT,
+                'std_RT' : std_RT,
+                'correct_mean_RT' : correct_mean_RT,
+                'correct_std_RT' : correct_std_RT,
+                'error_mean_RT' : error_mean_RT,
+                'error_std_RT' : error_std_RT,
+                'real_mean_RT' : real_mean_RT,
+                'real_std_RT' : real_std_RT,
+                'posed_mean_RT' : posed_mean_RT,
+                'posed_std_RT' : posed_std_RT}
+
+    df_save_RT = pd.DataFrame(list(dict_RT.items()), columns = ['performance', 'values'])
+    df_performance = pd.concat([df_performance, df_save_RT])
+
     return df_performance
 
-def stat_perf(df) :
+def stat_performance(df) :
     
     ''' 
 
@@ -129,8 +144,7 @@ def stat_perf(df) :
     
     Experimental design with repeated measures for 
     each participants for both types of laugh and 
-    both types of response (rmANOVA or Wilcoxon test
-    depending on the normality of the distribution)
+    both types of response (rmANOVA)
 
     - Dependant variable : performance
     - Subject : all subjects
@@ -139,38 +153,28 @@ def stat_perf(df) :
     '''
 
     df_perf = df[['subID','active_laughType','response','nb_resp']].groupby(['subID','active_laughType','response'], as_index=False).count()
-    print(df_perf.head())
 
     # Verification of the normality
     perf_count = df_perf['nb_resp']
+    print('\nNormality test for perf-laugh:\n', pg.normality(data = df_perf, dv = 'nb_resp', group = 'active_laughType'))
+    print('Normality test for perf-response:\n', pg.normality(data = df_perf, dv = 'nb_resp', group = 'response'))
 
-    # QQplot
-    fig = sm.qqplot(perf_count, line='45')
-    plt.show()
-
-    perf_count.hist()
-    plt.show()
-
-    # Compute normality 
-    print(pg.normality(data = df_perf, dv = 'nb_resp', group = 'active_laughType'))
-    print(pg.sphericity(data = df_perf, dv = 'nb_resp', subject = 'subID', within = 'active_laughType')[-1])
-
-    # Apply statistical analysis (Wilcoxon test)
-    real_laughter = df[df['active_laughType'].str.contains('real') == True]
-    posed_laughter = df[df['active_laughType'].str.contains('posed') == True]
-
-    # Perform wilcoxon test for non normalize data
-    grouped_real = real_laughter[['subID','response','nb_resp']].groupby(['subID','response'], as_index=False).count()
-    grouped_posed = posed_laughter[['subID','response','nb_resp']].groupby(['subID','response'], as_index=False).count()
-    result_perf_wilcoxon = stats.wilcoxon(grouped_posed['nb_resp'], grouped_real['nb_resp'])
-    print(result_perf_wilcoxon)
+    #Verification of the sphericity
+    spher, _, chisq, dof, pval = pg.sphericity(df_perf, dv='nb_resp',
+                                           subject='subID',
+                                           within=['active_laughType', 'response'])
+    print('Test sphericity nb_resp:', spher, round(chisq, 3), dof, round(pval, 3), '\n')
 
     # Perform ANOVA RM
-    result_perf_anovarm = AnovaRM(df_perf, 'nb_resp', 'subID', within=['active_laughType','response'])
-    result_perf = result_perf_anovarm.fit()
-    print(result_perf)
+    result_perf_anovarm = pg.rm_anova(data=df_perf, dv='nb_resp', subject='subID', 
+                                    within=['active_laughType','response'],
+                                    correction='auto', detailed=True)
+    print('Result ANOVARM for performance:\n', result_perf_anovarm)
 
-    return result_perf_wilcoxon, result_perf_anovarm
+    # Save perf stats results in csv file
+    result_perf_anovarm.to_csv(BEHAV_PATH + 'subj-all_task-LaughterActive_res-perf-ANOVArm.csv', index = False)
+
+    return result_perf_anovarm
 
 def stat_RT(df) :
     
@@ -184,8 +188,7 @@ def stat_RT(df) :
     
     Experimental design with repeated measures for 
     each participants for both types of laugh and 
-    both types of response (rmANOVA or Wilcoxon test
-    depending on the normality of the distribution)
+    both types of response (rmANOVA)
 
     - Dependant variable : reaction time
     - Subject : all subjects
@@ -194,29 +197,28 @@ def stat_RT(df) :
     '''
 
     df_RT = df[['subID','active_laughType','response','RT']].groupby(['subID','active_laughType','response'], as_index=False).mean()
-    print(df_RT)
 
     # Verify if data is normally distributed
-    # As our sample is > 50
-    # we use Kolmogorov-Smirnov Test
     RT = df_RT['RT']
-    print(pg.normality(data = df_RT, dv = 'RT', group = 'active_laughType'))
-    print(pg.normality(data = df_RT, dv = 'RT', group = 'response'))
+    print('\nNormality test for RT-laugh:\n', pg.normality(data = df_RT, dv = 'RT', group = 'active_laughType'))
+    print('Normality test for RT-response:\n', pg.normality(data = df_RT, dv = 'RT', group = 'response'))
 
-    fig = sm.qqplot(RT, line='45')
-    plt.show()
-
-    # Apply statistical analysis (Friedman test)
-    result_stat_RT = pg.friedman(data=df_RT, dv="RT", within='response', subject="subID")
-    # stats.friedmanchisquare
-    print(result_stat_RT)
+    #Verification of the sphericity
+    spher, _, chisq, dof, pval = pg.sphericity(df_RT, dv='RT',
+                                           subject='subID',
+                                           within=['active_laughType', 'response'])
+    print('Test sphericity RT:', spher, round(chisq, 3), dof, round(pval, 3), '\n')
 
     # Perform ANOVA RM
-    result_RT_anovarm = AnovaRM(df_RT, 'RT', 'subID', within=['active_laughType','response'])
-    result_RT = result_perf_anovarm.fit()
-    print(result_RT)
+    result_RT_anovarm = pg.rm_anova(data=df_RT, dv='RT', subject='subID', 
+                                    within=['active_laughType','response'],
+                                    correction='auto', detailed=True)
+    print('\nResult ANOVARM for RT:\n', result_RT_anovarm)
 
-    return result_RT
+    # Save stats results
+    result_RT_anovarm.to_csv(BEHAV_PATH + 'subj-all_task-LaughterActive_res-RT-ANOVArm.csv', index = False)
+
+    return result_RT_anovarm
 
 def plot_perf(df) : 
 
@@ -227,52 +229,36 @@ def plot_perf(df) :
     '''
 
     grouped_laugh = df.groupby(['subID', 'response', 'active_laughType']).count()
-    print(grouped_laugh.head())
 
     grouped_RT = df.groupby(['subID', 'response', 'active_laughType']).mean()
-    print(grouped_RT.head())
 
     # Plot differences between hit and false
     grouped_laugh.boxplot(column = 'nb_resp', by = ['response'])
     plt.ylabel('Number of answer')
     plt.title('Overall performance')
-    plt.savefig(BEHAV_PATH + 'discrimination_performance-response.png')
-    plt.show()
-
-    sns.boxplot(data = df, x= 'active_laughType', y = 'nb_resp', palette = 'Set3')
+    plt.savefig(BEHAV_PATH + 'subj-all_task-LaughterActive_plot-nbresponse.png')
     plt.show()
 
     # Plot differences between laughter type performance
     grouped_laugh.boxplot(column = 'nb_resp', by = ['response', 'active_laughType'])
     plt.ylabel('Number of answer')
     plt.title('Performance for each type of laughter')
-    plt.savefig(BEHAV_PATH + 'discrimination_performance-real-posed.png')
-    plt.show()
-
-    sns.boxplot(data = df, x= 'active_laughType', y = 'nb_resp', hue = 'response', palette = 'Set3')
+    plt.savefig(BEHAV_PATH + 'subj-all_task-LaughterActive_plot-real-posed.png')
     plt.show()
 
     # Plot differences between RT for each laughter types
     grouped_RT.boxplot(column = 'RT', by = ['active_laughType'])
     plt.ylabel('RT (sec)')
     plt.title('RT for each type of laughter')
-    plt.savefig(BEHAV_PATH + 'discrimination_RT-real-posed.png')
-    plt.show()
-
-    sns.boxplot(data = df, x= 'active_laughType', y = 'RT', palette = 'Set3') 
+    plt.savefig(BEHAV_PATH + 'subj-all_task-LaughterActive_plot-RT-real-posed.png')
     plt.show()
 
     # Plot differences between RT for correct and error responses
-    grouped_RT.boxplot(column = 'RT', by = ['response'])
+    sns.boxplot(data = df, x= 'response', y = 'RT') 
     plt.ylabel('RT (sec)')
     plt.title('RT for each response category')
-    plt.savefig(BEHAV_PATH + 'discrimination_RT-correct-error.png')
+    plt.savefig(BEHAV_PATH + 'subj-all_task-LaughterActive_plot-RT-correct-error.png')
     plt.show()
-
-    sns.boxplot(data = df, x= 'active_laughType', y = 'RT', hue = 'response', palette = 'Set3')
-    plt.show()
-    return grouped_laugh, grouped_RT
-
 
 if __name__ == '__main__' :
 
@@ -285,14 +271,12 @@ if __name__ == '__main__' :
 
     df_data, df_clean = all_perf_data(PERF_PATH)
 
-    df_performance = compute_performance(df_clean)
+    df_performance = compute_performance_and_RT(df_clean)
 
-    correct_RT, error_RT, lreal_RT, lposed_RT, df_performance = compute_RT(df_clean, df_performance)
+    result_perf_anovarm = stat_performance(df_clean)
+    result_RT_anovarm = stat_RT(df_clean)
 
-    result_perf_wilcoxon, result_perf_anovarm = stat_perf(df_clean)
-    result_stat_RT = stat_RT(df_clean)
-
-    df_grouped_laugh, df_grouped_RT = plot_perf(df_clean)
+    plot_perf(df_clean)
 
     # Save final df performance with all info
-    df_performance.to_csv(BEHAV_PATH + 'subj-all_task-LaughterActive_results-performance_RT_stats.csv', index = False)       
+    df_performance.to_csv(BEHAV_PATH + 'subj-all_task-LaughterActive_res-performance-RT.csv', index = False)       
