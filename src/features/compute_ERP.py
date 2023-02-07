@@ -14,40 +14,34 @@ def ERP(PREPROC_PATH, subj_list, run_list, cond1, cond2, stage) :
     epochs_concat = []
 
     for subj in subj_list :
-        for run in run_list :
-            epochs_file = get_bids_file(PREPROC_PATH, subj, run, stage)
-            epochs = mne.read_epochs(epochs_file)
-            print(epochs.info)
+        _, epochs_file = get_bids_file(PREPROC_PATH, stage = stage, subj = subj)
+        epochs = mne.read_epochs(epochs_file)
+        print(epochs.info)
 
-            # Average each condition
-            condition1 = epochs[cond1].average()
-            condition2 = epochs[cond2].average()
+        # Average each condition
+        condition1 = epochs[cond1].average()
+        condition2 = epochs[cond2].average()
 
-            epochs_concat = mne.concatenate_epochs([epochs]) # See if problem with head location
-
-    # Need to save epochs_concat
-    if len(subj_list) == 32 :
-        subj_name = "all"
-    else :
-        subj_name = "notall"
-
-    # TODO : Need to put that in params
-    save_cond1 = RESULT_PATH + "meg/reports/epochs/ave-epo_cond-{}_epochs.pkl".format(cond1)
-    save_cond2 = RESULT_PATH + "meg/reports/epochs/ave-epo_cond-{}_epochs.pkl".format(cond2)
-    save_concat = RESULT_PATH + "meg/reports/epochs/concat-epo_cond-{}-{}_epochs.pkl".format(cond1, cond2)
-
-    with open(save_cond1, 'wb') as f:
-        pickle.dump(condition1, f)
-
-    with open(save_cond2, 'wb') as f:
-        pickle.dump(condition2, f)
+        epochs_concat = mne.concatenate_epochs([epochs]) # See if problem with head location
     
-    with open(save_concat, 'wb') as f:
+    conditions = {cond1 : condition1, cond2: condition2}
+
+    # Save average condition into pkl file
+    for one_condition in conditions :
+        _, save_erp = get_bids_file(RESULT_PATH, stage = "erp", condition=one_condition)
+        with open(save_erp, 'wb') as f:
+            pickle.dump(condition1, f)
+    
+    # Save concat condition into pkl file
+    conditions = cond1 + "-" + cond2
+    _, save_erp_concat = get_bids_file(RESULT_PATH, stage = "erp-concat", condition=conditions)
+    
+    with open(save_erp_concat, 'wb') as f:
         pickle.dump(epochs_concat, f)    
 
     return condition1, condition2, epochs_concat
 
-def cluster_ERP(epochs, event_id) :
+def cluster_ERP(epochs, event_id, cond1, cond2) :
 
     # Code adapted from :
     # https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
@@ -85,20 +79,13 @@ def cluster_ERP(epochs, event_id) :
                                                 adjacency=None)
     F_obs, clusters, p_values, _ = cluster_stats
 
-    # TODO : Need to find a better way to do this save !
-    save_Fobs = RESULT_PATH + "meg/reports/epochs/ERP-cluster_mes-Fobs_pval-{}.pkl".format(alpha_cluster_forming)
-    save_clusters = RESULT_PATH + "meg/reports/epochs/ERP-cluster_mes-clusters_pval-{}.pkl".format(alpha_cluster_forming)
-    save_pval = RESULT_PATH + "meg/reports/epochs/ERP-cluster_mes-pva_pval-{}.pkl".format(alpha_cluster_forming)
-
-    with open(save_Fobs, 'wb') as f:
-        pickle.dump(F_obs, f)
-
-    with open(save_clusters, 'wb') as f:
-        pickle.dump(clusters, f)
+    # Save cluster stats to use it later
+    conditions = cond1 + "-" + cond2
+    _, save_cluster_stats = get_bids_file(RESULT_PATH, stage = "erp-clusters", measure="cluster-stats", condition = conditions)
     
-    with open(save_pval, 'wb') as f:
-        pickle.dump(p_values, f)
-        
+    with open(save_cluster_stats, 'wb') as f:
+        pickle.dump(cluster_stats, f)  
+
     return F_obs, clusters, p_values
 
 if __name__ == "__main__" :
@@ -118,4 +105,4 @@ if __name__ == "__main__" :
     condition1, condition2, epochs_concat = ERP(PREPROC_PATH, subj_list, run_list, cond1, cond2, "epo")
 
     # Compute ERP clusters
-    F_obs, clusters, p_values = cluster_ERP(epochs_concat, event_id)
+    F_obs, clusters, p_values = cluster_ERP(epochs_concat, event_id, cond1, cond2)
