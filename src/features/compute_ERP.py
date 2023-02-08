@@ -30,7 +30,7 @@ def ERP(PREPROC_PATH, subj_list, run_list, cond1, cond2, stage) :
     for one_condition in conditions :
         _, save_erp = get_bids_file(RESULT_PATH, stage = "erp", condition=one_condition)
         with open(save_erp, 'wb') as f:
-            pickle.dump(condition1, f)
+            pickle.dump(conditions.get(one_condition), f)
     
     # Save concat condition into pkl file
     conditions = cond1 + "-" + cond2
@@ -102,7 +102,7 @@ if __name__ == "__main__" :
     event_id = {'LaughReal' : 11, 'LaughPosed' : 12}
 
     # Compute ERPs
-    condition1, condition2, epochs_concat = ERP(PREPROC_PATH, subj_list, run_list, cond1, cond2, "epo")
+    condition1, condition2, epochs_concat = ERP(PREPROC_PATH, subj_list, run_list, cond1, cond2, "proc-clean_epo")
 
     # Compute ERP clusters
     F_obs, clusters, p_values = cluster_ERP(epochs_concat, event_id, cond1, cond2)
