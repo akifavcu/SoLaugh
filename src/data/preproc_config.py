@@ -20,7 +20,7 @@ deriv_root = PREPROC_PATH
 list_argv = sys.argv
 
 arg_task = "LaughterActive" #task by default
-subj = '03'  # subject by default
+subj = ['03']  # subject by default
 
 for argument in list_argv :
     if "--subject=" in argument :
@@ -35,11 +35,7 @@ subjects = subj
 sessions = ['recording']
 
 task = arg_task # task by default
-
-if task == 'LaughterActive': 
-    runs = ACTIVE_RUN
-elif task == 'LaughterPassive' :
-    runs = PASSIVE_RUN  
+runs = ['all']
 
 find_flat_channels_meg = False
 find_noisy_channels_meg = False
@@ -66,6 +62,8 @@ ica_l_freq = 1.
 ica_n_components = 0.99
 ica_reject_components = 'auto'
 
+rename_events = {'Bad' : 'Miss'}
+
 # Epochs
 epochs_tmin = -0.5
 epochs_tmax = 1.5
@@ -73,15 +71,15 @@ baseline = (None, 0)
 
 # Conditions / events to consider when epoching
 if task == "LaughterActive" : 
-    conditions = ['LaughPosed', 'LaughReal']
+    conditions = ['LaughReal', 'LaughPosed', 'Good', 'Miss']
     event_repeated = 'drop'
 
     # Decoding
-    decode = True
-    contrasts = [('LaughReal', 'LaughPosed')]
+    decode = False
+    # contrasts = [('LaughReal', 'LaughPosed')]
 
     # Time-frequency analysis 
-    time_frequency_conditions = ['LaughPosed', 'LaughReal']
+    # time_frequency_conditions = ['LaughPosed', 'LaughReal']
     decoding_csp = False
 
 elif task == "LaughterPassive" :
@@ -89,11 +87,11 @@ elif task == "LaughterPassive" :
     event_repeated = 'drop'
     
     # Decoding
-    decode = True
-    contrasts = [('EnvReal', 'ScraReal', 'EnvPosed','ScraPosed')]
+    decode = False
+    # contrasts = [('EnvReal', 'EnvPosed')]
 
     # Time-frequency analysis 
-    time_frequency_conditions = ['EnvReal', 'ScraReal', 'EnvPosed','ScraPosed']
+    # time_frequency_conditions = ['EnvReal', 'ScraReal', 'EnvPosed','ScraPosed']
     decoding_csp = False
 
 # Source reconstruction
