@@ -35,7 +35,11 @@ subjects = subj
 sessions = ['recording']
 
 task = arg_task # task by default
-runs = ['all']
+
+if arg_task == "LaughterActive" :
+    runs = ACTIVE_RUN
+elif arg_task == "LaughterPassive" :
+    runs = PASSIVE_RUN
 
 find_flat_channels_meg = False
 find_noisy_channels_meg = False
