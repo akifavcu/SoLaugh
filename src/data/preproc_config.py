@@ -66,7 +66,6 @@ ica_l_freq = 1.
 ica_n_components = 0.99
 ica_reject_components = 'auto'
 
-rename_events = {'Bad' : 'Miss'}
 
 # Epochs
 epochs_tmin = -0.5
@@ -75,6 +74,7 @@ baseline = (None, 0)
 
 # Conditions / events to consider when epoching
 if task == "LaughterActive" : 
+    rename_events = {'Bad' : 'Miss'}
     conditions = ['LaughReal', 'LaughPosed', 'Good', 'Miss']
     event_repeated = 'drop'
 
