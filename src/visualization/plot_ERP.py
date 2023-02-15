@@ -28,12 +28,12 @@ def plot_ERP(condition1, condition2, cond1_name, cond2_name, picks) :
     # fig_ERP.savefig(fname_ERP) # Doesn't work
 
 
-def visualize_cluster(epochs, F_obs, clusters, p_values, event_id) :
-
-    # Code adapted from :
-    # https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
+def visualize_cluster(epochs, clusters_stats, event_id) :
     
-    p_accept = 0.01
+    epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
+    F_obs, clusters, p_values, _ = clusters_stats
+
+    p_accept = 0.05
     good_cluster_inds = np.where(p_values < p_accept)[0]
 
     # configure variables for visualization
@@ -41,7 +41,8 @@ def visualize_cluster(epochs, F_obs, clusters, p_values, event_id) :
 
     # organize data for plotting
     evokeds = {cond: epochs[cond].average() for cond in event_id}
-
+               
+    print(epochs.info)
     # loop over clusters
     for i_clu, clu_idx in enumerate(good_cluster_inds):
         # unpack cluster information, get unique indices
@@ -66,8 +67,8 @@ def visualize_cluster(epochs, F_obs, clusters, p_values, event_id) :
         # plot average test statistic and mark significant sensors
         f_evoked = mne.EvokedArray(f_map[:, np.newaxis], epochs.info, tmin=0)
         f_evoked.plot_topomap(times=0, mask=mask, axes=ax_topo, cmap='Reds',
-                            vlim=(np.min, np.max), show=False,
-                            colorbar=False, mask_params=dict(markersize=10))
+                              vlim=(np.min, np.max), show=False,
+                              colorbar=False, mask_params=dict(markersize=10))
         image = ax_topo.images[0]
 
         # remove the title that would otherwise say "0.000 s"
@@ -88,61 +89,53 @@ def visualize_cluster(epochs, F_obs, clusters, p_values, event_id) :
         if len(ch_inds) > 1:
             title += "s (mean)"
         plot_compare_evokeds(evokeds, title=title, picks=ch_inds, axes=ax_signals,
-                            colors=colors, linestyles=None, show=False,
-                            split_legend=True, truncate_yaxis='auto')
+                             colors=colors, show=False,
+                             split_legend=True, truncate_yaxis='auto')
+
         # plot temporal cluster extent
         ymin, ymax = ax_signals.get_ylim()
         ax_signals.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
-                                color='orange', alpha=0.3)
+                                 color='orange', alpha=0.3)
 
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
-        fig.savefig(FIG_PATH + "plot-clusters_ERP")
         plt.show()
-        plt.close()
-        "Done Visualize cluster"
 
 if __name__ == "__main__" :
 
     # Select what conditions to compute
     cond1 = "LaughReal"
     cond2 = "LaughPosed"
+    conditions = cond1 + "-" + cond2
     picks = "meg" # Select MEG channels
     event_id = {'LaughReal' : 11, 'LaughPosed' : 12}
 
     # TODO : Need to put that in params
-    save_cond1 = RESULT_PATH + "meg/reports/epochs/ave-epo_cond-{}_epochs.pkl".format(cond1)
-    save_cond2 = RESULT_PATH + "meg/reports/epochs/ave-epo_cond-{}_epochs.pkl".format(cond2)
-    save_concat = RESULT_PATH + "meg/reports/epochs/concat-epo_cond-{}-{}_epochs.pkl".format(cond1, cond2)
+    _, save_erp_cond1 = get_bids_file(RESULT_PATH, stage = "erp", condition=cond1)
+
+    _, save_erp_cond2 = get_bids_file(RESULT_PATH, stage = "erp", condition=cond2)
+
+    _, save_erp_concat = get_bids_file(RESULT_PATH, stage = "erp-concat", condition=conditions)
 
     # Need to get the files
-    with open(save_cond1, "rb") as f:
+    with open(save_erp_cond1, "rb") as f:
         condition1 = pickle.load(f)
 
-    with open(save_cond2, "rb") as f:
+    with open(save_erp_cond2, "rb") as f:
         condition2 = pickle.load(f)
 
-    with open(save_concat, "rb") as f:
+    with open(save_erp_concat, "rb") as f:
         epochs_concat = pickle.load(f)
 
     # Plot ERPs
     plot_ERP(condition1, condition2, cond1, cond2, picks)
 
     # TODO : Need to find a better way to import these files
-    alpha_cluster_forming = 0.001
-    save_Fobs = RESULT_PATH + "meg/reports/epochs/ERP-cluster_mes-Fobs_pval-{}.pkl".format(alpha_cluster_forming)
-    save_clusters = RESULT_PATH + "meg/reports/epochs/ERP-cluster_mes-clusters_pval-{}.pkl".format(alpha_cluster_forming)
-    save_pval = RESULT_PATH + "meg/reports/epochs/ERP-cluster_mes-pva_pval-{}.pkl".format(alpha_cluster_forming)
+    _, save_clusters_stats = get_bids_file(RESULT_PATH, stage = "erp-clusters", measure="cluster-stats", condition = conditions)
 
-    with open(save_Fobs, 'rb') as f:
-        F_obs = pickle.load(f)
-
-    with open(save_clusters, 'rb') as f:
+    with open(save_clusters_stats, 'rb') as f:
         clusters = pickle.load(f)
-    
-    with open(save_pval, 'rb') as f:
-        p_values = pickle.load(f)
 
     # Visualization of ERP clusters
-    visualize_cluster(epochs_concat, F_obs, clusters, p_values, event_id)
+    visualize_cluster(epochs_concat, clusters, event_id)
