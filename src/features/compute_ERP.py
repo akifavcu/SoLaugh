@@ -1,21 +1,49 @@
 import mne
 import os
 import scipy.stats
+import pickle
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-import pickle
 from src.utils import get_bids_file, compute_ch_adjacency
-from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_LIST, ACTIVE_RUN, RESULT_PATH
+from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_LIST, ACTIVE_RUN, RESULT_PATH, EVENTS_ID
 from mne.stats import spatio_temporal_cluster_test, combine_adjacency
 
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-task",
+    "--task",
+    default="LaughterActive",
+    type=str,
+    help="Task to process",
+)
+
+parser.add_argument(
+    "-cond1",
+    "--condition1",
+    default="LaughReal",
+    type=str,
+    help="First condition",
+)
+
+parser.add_argument(
+    "-cond2",
+    "--condition2",
+    default="LaughPosed",
+    type=str,
+    help="Second condition",
+)
+
+args = parser.parse_args()
+
 # Will be moved in another file later
-def ERP(PREPROC_PATH, subj_list, cond1, cond2, stage) :
+def ERP(PREPROC_PATH, subj_list, task, cond1, cond2, stage) :
     
     epochs_concat = []
     epochs_all_list = []
 
     for subj in subj_list :
-        _, epochs_file = get_bids_file(PREPROC_PATH, stage = stage, subj = subj)
+        _, epochs_file = get_bids_file(PREPROC_PATH, task = task, stage = stage, subj = subj)
         epochs = mne.read_epochs(epochs_file)
         epochs = mne.Epochs.apply_baseline(epochs,baseline=(None,0))
         
@@ -65,7 +93,7 @@ def cluster_ERP(epochs, event_id, cond1, cond2) :
     # as we got 270 channels and not 275 as the CTF275 provide
     adjacency, ch_names = compute_ch_adjacency(epochs.info, ch_type='mag')
     print(adjacency.shape)
-    
+
     # Obtain the data as a 3D matrix and transpose it such that
     # the dimensions are as expected for the cluster permutation test:
     # n_epochs × n_times × n_channels
@@ -109,17 +137,31 @@ def cluster_ERP(epochs, event_id, cond1, cond2) :
 if __name__ == "__main__" :
     
     # Select subjects and runs and stage
+    task = args.task
     subj_list = ["01"]
     stage = "epo"
 
     # Select what conditions to compute (str)
-    cond1 = "LaughReal"
-    cond2 = "LaughPosed"
+    cond1 = args.condition1
+    cond2 = args.condition2
+    condition_list = [cond1, cond2]
+    event_id = dict()
     picks = "meg" # Select MEG channels
-    event_id = {'LaughReal' : 11, 'LaughPosed' : 12}
+    
+    #if cond1 or cond2 not in EVENTS_ID.keys() :
+    #    raise Exception("Condition is not an event")
+
+    for ev in EVENTS_ID :
+        for conds in condition_list :
+            if conds not in EVENTS_ID :
+                raise Exception("Condition is not an event")
+            if conds == ev :
+                event_id[conds] = EVENTS_ID[ev]
+
+    print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
     # Compute ERPs
-    condition1, condition2, epochs_concat = ERP(PREPROC_PATH, subj_list, cond1, cond2, "proc-clean_epo")
+    condition1, condition2, epochs_concat = ERP(PREPROC_PATH, subj_list, task, cond1, cond2, "proc-clean_epo")
 
     # Compute ERP clusters
     F_obs, clusters, p_values = cluster_ERP(epochs_concat, event_id, cond1, cond2)
