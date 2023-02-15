@@ -148,9 +148,6 @@ if __name__ == "__main__" :
     event_id = dict()
     picks = "meg" # Select MEG channels
     
-    #if cond1 or cond2 not in EVENTS_ID.keys() :
-    #    raise Exception("Condition is not an event")
-
     for ev in EVENTS_ID :
         for conds in condition_list :
             if conds not in EVENTS_ID :
