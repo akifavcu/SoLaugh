@@ -80,7 +80,7 @@ def ERP(PREPROC_PATH, subj_list, task, cond1, cond2, stage) :
 
     return condition1, condition2, epochs_concat
 
-def cluster_ERP(epochs, event_id, cond1, cond2) :
+def cluster_ERP(epochs, task, event_id, cond1, cond2) :
 
     # Code adapted from :
     # https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
@@ -119,7 +119,7 @@ def cluster_ERP(epochs, event_id, cond1, cond2) :
     f_thresh = scipy.stats.f.ppf(1 - alpha_cluster_forming, dfn=dfn, dfd=dfd)
 
     # run the cluster based permutation analysis
-    cluster_stats = spatio_temporal_cluster_test(X, n_permutations=100,
+    cluster_stats = spatio_temporal_cluster_test(X, n_permutations=1000,
                                                 threshold=f_thresh, tail=tail,
                                                 n_jobs=None, buffer_size=None,
                                                 adjacency=adjacency)
@@ -127,7 +127,7 @@ def cluster_ERP(epochs, event_id, cond1, cond2) :
 
     # Save cluster stats to use it later
     conditions = cond1 + "-" + cond2
-    _, save_cluster_stats = get_bids_file(RESULT_PATH, stage = "erp-clusters", measure="cluster-stats", condition = conditions)
+    _, save_cluster_stats = get_bids_file(RESULT_PATH, stage = "erp-clusters", task=task, measure="cluster-stats", condition = conditions)
     
     with open(save_cluster_stats, 'wb') as f:
         pickle.dump(cluster_stats, f)  
@@ -161,4 +161,4 @@ if __name__ == "__main__" :
     condition1, condition2, epochs_concat = ERP(PREPROC_PATH, subj_list, task, cond1, cond2, "proc-clean_epo")
 
     # Compute ERP clusters
-    F_obs, clusters, p_values = cluster_ERP(epochs_concat, event_id, cond1, cond2)
+    F_obs, clusters, p_values = cluster_ERP(epochs_concat, task, event_id, cond1, cond2)
