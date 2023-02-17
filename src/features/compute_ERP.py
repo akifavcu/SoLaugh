@@ -67,13 +67,13 @@ def ERP(PREPROC_PATH, subj_list, task, cond1, cond2, stage) :
 
     # Save average condition into pkl file
     for one_condition in conditions :
-        _, save_erp = get_bids_file(RESULT_PATH, stage = "erp", condition=one_condition)
+        _, save_erp = get_bids_file(RESULT_PATH, task=task, stage = "erp", condition=one_condition)
         with open(save_erp, 'wb') as f:
             pickle.dump(conditions.get(one_condition), f)
     
     # Save concat condition into pkl file
     conditions = cond1 + "-" + cond2
-    _, save_erp_concat = get_bids_file(RESULT_PATH, stage = "erp-concat", condition=conditions)
+    _, save_erp_concat = get_bids_file(RESULT_PATH, task=task, stage = "erp-concat", condition=conditions)
     
     with open(save_erp_concat, 'wb') as f:
         pickle.dump(epochs_save_file, f)    
