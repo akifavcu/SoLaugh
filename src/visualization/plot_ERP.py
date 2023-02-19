@@ -174,7 +174,7 @@ if __name__ == "__main__" :
         epochs_concat = pickle.load(f)
 
     with open(save_clusters_stats, 'rb') as f:
-        clusters = pickle.load(f)
+        cluster_stats = pickle.load(f)
 
     # Plot ERPs
     plot_ERP(condition1, condition2, cond1, cond2, task, picks)
