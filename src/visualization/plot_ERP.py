@@ -180,4 +180,4 @@ if __name__ == "__main__" :
     plot_ERP(condition1, condition2, cond1, cond2, task, picks)
 
     # Visualization of ERP clusters
-    visualize_cluster(epochs_concat, cluster_stats, event_id, conditions, cond1, cond2)
+    visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, cond2)
