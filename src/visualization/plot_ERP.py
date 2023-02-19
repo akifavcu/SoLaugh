@@ -1,17 +1,44 @@
 import mne
 import os
 import scipy.stats
+import pickle
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-import pickle
 from src.utils import get_bids_file
-from src.params import RESULT_PATH, SUBJ_LIST, ACTIVE_RUN, FIG_PATH
+from src.params import RESULT_PATH, SUBJ_LIST, ACTIVE_RUN, FIG_PATH, EVENTS_ID
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mne.viz import plot_compare_evokeds
 
-# Remove plot for compute canada
-def plot_ERP(condition1, condition2, cond1_name, cond2_name, picks) :
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-task",
+    "--task",
+    default="LaughterActive",
+    type=str,
+    help="Task to process",
+)
 
+parser.add_argument(
+    "-cond1",
+    "--condition1",
+    default="LaughReal",
+    type=str,
+    help="First condition",
+)
+
+parser.add_argument(
+    "-cond2",
+    "--condition2",
+    default="LaughPosed",
+    type=str,
+    help="Second condition",
+)
+
+args = parser.parse_args()
+
+def plot_ERP(condition1, condition2, cond1_name, cond2_name, picks) :
+    
     # Plot each condition separately
     fig_cond1 = condition1.plot_joint(picks = picks)
     fname_cond1 = FIG_PATH + "plot-join_cond-" + cond1_name
@@ -28,27 +55,29 @@ def plot_ERP(condition1, condition2, cond1_name, cond2_name, picks) :
     # fig_ERP.savefig(fname_ERP) # Doesn't work
 
 
-def visualize_cluster(epochs, clusters_stats, event_id) :
-    
+def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, cond2) :
+    """
+    Code adapted from : 
+    https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
+    """
     epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
-    F_obs, clusters, p_values, _ = clusters_stats
-
+    F_obs, clusters, p_values, _ = cluster_stats
+    
     p_accept = 0.05
     good_cluster_inds = np.where(p_values < p_accept)[0]
+    print("Good cluster :", good_cluster_inds)
 
     # configure variables for visualization
-    colors = {"LaughReal": "crimson", "LaughPosed": 'steelblue'}
+    colors = {cond1: "crimson", cond2: 'steelblue'}
 
     # organize data for plotting
     evokeds = {cond: epochs[cond].average() for cond in event_id}
                
-    print(epochs.info)
     # loop over clusters
     for i_clu, clu_idx in enumerate(good_cluster_inds):
         # unpack cluster information, get unique indices
         time_inds, space_inds = np.squeeze(clusters[clu_idx])
         ch_inds = np.unique(space_inds)
-        print(ch_inds)
         time_inds = np.unique(time_inds)
 
         # get topography for F stat
@@ -69,6 +98,7 @@ def visualize_cluster(epochs, clusters_stats, event_id) :
         f_evoked.plot_topomap(times=0, mask=mask, axes=ax_topo, cmap='Reds',
                               vlim=(np.min, np.max), show=False,
                               colorbar=False, mask_params=dict(markersize=10))
+
         image = ax_topo.images[0]
 
         # remove the title that would otherwise say "0.000 s"
@@ -100,25 +130,40 @@ def visualize_cluster(epochs, clusters_stats, event_id) :
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
-        plt.show()
+        fig.savefig(FIG_PATH + '/erp/sub-all_run-all_task-{}_cond-{}_meas-cluster_erp.png'.format(task, conditions))
+        #plt.show()
 
 if __name__ == "__main__" :
 
-    # Select what conditions to compute
-    cond1 = "LaughReal"
-    cond2 = "LaughPosed"
-    conditions = cond1 + "-" + cond2
+    # Conditions and task to compute
+    task = args.task
+    cond1 = args.condition1
+    cond2 = args.condition2
+
+    conditions = cond1 + '-' + cond2
+    condition_list = [cond1, cond2]
+    event_id = dict()
     picks = "meg" # Select MEG channels
-    event_id = {'LaughReal' : 11, 'LaughPosed' : 12}
 
-    # TODO : Need to put that in params
-    _, save_erp_cond1 = get_bids_file(RESULT_PATH, stage = "erp", condition=cond1)
+    for ev in EVENTS_ID :
+        for conds in condition_list :
+            if conds not in EVENTS_ID :
+                raise Exception("Condition is not an event")
+            if conds == ev :
+                event_id[conds] = EVENTS_ID[ev]
 
-    _, save_erp_cond2 = get_bids_file(RESULT_PATH, stage = "erp", condition=cond2)
+    print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
-    _, save_erp_concat = get_bids_file(RESULT_PATH, stage = "erp-concat", condition=conditions)
+    # Import ERP files path
+    _, save_erp_cond1 = get_bids_file(RESULT_PATH, task= task, stage = "erp", condition=cond1)
 
-    # Need to get the files
+    _, save_erp_cond2 = get_bids_file(RESULT_PATH, task=task, stage = "erp", condition=cond2)
+
+    _, save_erp_concat = get_bids_file(RESULT_PATH, task=task, stage = "erp-concat", condition=conditions)
+
+    _, save_clusters_stats = get_bids_file(RESULT_PATH, stage = "erp-clusters", task= task, measure="cluster-stats", condition = conditions)
+
+    # Open pickle files
     with open(save_erp_cond1, "rb") as f:
         condition1 = pickle.load(f)
 
@@ -128,14 +173,11 @@ if __name__ == "__main__" :
     with open(save_erp_concat, "rb") as f:
         epochs_concat = pickle.load(f)
 
-    # Plot ERPs
-    plot_ERP(condition1, condition2, cond1, cond2, picks)
-
-    # TODO : Need to find a better way to import these files
-    _, save_clusters_stats = get_bids_file(RESULT_PATH, stage = "erp-clusters", measure="cluster-stats", condition = conditions)
-
     with open(save_clusters_stats, 'rb') as f:
         clusters = pickle.load(f)
+
+    # Plot ERPs
+    plot_ERP(condition1, condition2, cond1, cond2, task, picks)
 
     # Visualization of ERP clusters
     visualize_cluster(epochs_concat, clusters, event_id)
