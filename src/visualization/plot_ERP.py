@@ -37,7 +37,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def plot_ERP(condition1, condition2, cond1_name, cond2_name, picks) :
+def plot_ERP(condition1, condition2, cond1_name, cond2_name, task, picks) :
     
     # Plot each condition separately
     fig_cond1 = condition1.plot_joint(picks = picks)
@@ -155,13 +155,13 @@ if __name__ == "__main__" :
     print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
     # Import ERP files path
-    _, save_erp_cond1 = get_bids_file(RESULT_PATH, task= task, stage = "erp", condition=cond1)
+    _, save_erp_cond1 = get_bids_file(RESULT_PATH, task=task, stage="erp", condition=cond1)
 
-    _, save_erp_cond2 = get_bids_file(RESULT_PATH, task=task, stage = "erp", condition=cond2)
+    _, save_erp_cond2 = get_bids_file(RESULT_PATH, task=task, stage="erp", condition=cond2)
 
-    _, save_erp_concat = get_bids_file(RESULT_PATH, task=task, stage = "erp-concat", condition=conditions)
+    _, save_erp_concat = get_bids_file(RESULT_PATH, task=task, stage="erp-concat", condition=conditions)
 
-    _, save_clusters_stats = get_bids_file(RESULT_PATH, stage = "erp-clusters", task= task, measure="cluster-stats", condition = conditions)
+    _, save_clusters_stats = get_bids_file(RESULT_PATH, stage="erp-clusters", task=task, measure="cluster-stats", condition=conditions)
 
     # Open pickle files
     with open(save_erp_cond1, "rb") as f:
