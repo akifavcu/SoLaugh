@@ -37,21 +37,21 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def plot_ERP(condition1, condition2, cond1_name, cond2_name, task, picks) :
+def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     
     # Plot each condition separately
     fig_cond1 = condition1.plot_joint(picks = picks)
-    fname_cond1 = FIG_PATH + "plot-join_cond-" + cond1_name
+    fname_cond1 = FIG_PATH + "erp/subj-all_run-all_task-{}_plot-erp_cond-{}".format(task, cond1)
     fig_cond1.savefig(fname_cond1)
 
     fig_cond2 = condition2.plot_joint(picks = picks)
-    fname_cond2 = FIG_PATH + "plot-join_cond-" + cond2_name
+    fname_cond2 = FIG_PATH + "erp/subj-all_run-all_task-{}_plot-erp_cond-{}".format(task, cond2)
     fig_cond2.savefig(fname_cond2)
     
     # Plot ERPs LaughReal vs LaughPosed
     evoked = dict(real = condition1, posed = condition2)
     mne.viz.plot_compare_evokeds(evoked, picks = picks, combine='mean')
-    fname_ERP = FIG_PATH + "ERP_cond1-" + cond1_name + "_cond2-" + cond2_name
+    fname_ERP = FIG_PATH + "ERP_cond1-" + cond1 + "_cond2-" + cond2
     # fig_ERP.savefig(fname_ERP) # Doesn't work
 
 
@@ -130,7 +130,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
-        fig.savefig(FIG_PATH + '/erp/sub-all_run-all_task-{}_cond-{}_meas-cluster_erp.png'.format(task, conditions))
+        fig.savefig(FIG_PATH + 'erp/sub-all_run-all_task-{}_cond-{}_meas-cluster_erp.png'.format(task, conditions))
         #plt.show()
 
 if __name__ == "__main__" :
