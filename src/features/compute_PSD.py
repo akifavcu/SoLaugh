@@ -1,71 +1,110 @@
 import mne 
+import os
+import pickle
+import argparse
 from src.utils import get_bids_file
-from src.params import PREPROC_PATH
+from src.params import PREPROC_PATH, FREQS_LIST, FREQS_NAMES, EVENTS_ID, RESULT_PATH
 
-def ave_epochs(PREPROC_PATH, subj_list, run_list, cond1, cond2, stage) :
-    
-    epochs_concat = []
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-task",
+    "--task",
+    default="LaughterActive",
+    type=str,
+    help="Task to process",
+)
 
-    for subj in subj_list :
-        for run in run_list :
-            epochs_file = get_bids_file(PREPROC_PATH, subj, run, stage)
-            epochs = mne.read_epochs(epochs_file)
-            print(epochs.info)
+parser.add_argument(
+    "-cond1",
+    "--condition1",
+    default="LaughReal",
+    type=str,
+    help="First condition",
+)
 
-            # Average each condition
-            epochs_cond1 = epochs[cond1].average()
-            epochs_cond2 = epochs[cond2].average()
+parser.add_argument(
+    "-cond2",
+    "--condition2",
+    default="LaughPosed",
+    type=str,
+    help="Second condition",
+)
 
-            epochs_concat = mne.concatenate_epochs([epochs]) # TODO : See if problem with head location
+parser.add_argument(
+    "-freq",
+    "--frequency",
+    default="alpha",
+    type=str,
+    help="Frequency to compute",
+)
 
-    return epochs_cond1, epochs_cond2, epochs_concat
+args = parser.parse_args()
 
-#def compute_PSD(epochs_cond1, epochs_cond2, epochs_concat) :
-    # See https://natmeg.se/mne_timefrequency/MNE_timefrequency.html
+def compute_hilbert_PSD(epochs, event_id, freq, freq_name, picks, task) :
+    # Hilbert transform
     # Compute epoch psd for each frequency
-    # Save each epoch psd file in h5 format for each frequency
+    # Save each epoch psd file in pickle format for each frequency
+ 
+    l_freq = freq[0]
+    h_freq = freq[1]
 
-    # For each frequency :
-    #frequencies = np.arange(5., 120., 2.5)  # define frequencies of interest
-    #n_cycles = frequencies / 5.  # different number of cycle per frequency
-    #Fs = raw.info['sfreq']  # sampling in Hz
-    #decim = 5
-
-    #data = epochs_stim.get_data()
-    #from mne.time_frequency import induced_power
-    #power, phase_lock = induced_power(data, Fs=Fs, frequencies=frequencies,
-    #                              n_cycles=n_cycles, n_jobs=4, use_fft=False,
-    #                              decim=decim, zero_mean=True)
-    #power.shape, data.shape, frequencies.shape
-    # Save 
-
-def plot_PSD(epochs_cond1, epochs_cond2, epochs_concat) :
+    epochs_filter = epochs.copy()
+    epochs_filter.filter(l_freq, h_freq, picks = picks)
+    epochs_hilbert = epochs_filter.apply_hilbert(picks = picks)
     
-    # Plot PSD for condition 1
-    fig_cond1_psd = epochs_cond1.plot_psd_topomap(ch_type='mag', normalize=False) 
+    # Separate epoch per conditions
+    # We concatenate psd data for each freq
+    epochs_psd.append(epochs_hilbert.get_data())
 
-    # Plot PSD for condition 2
-    fig_cond2_psd = epochs_cond2.plot_psd_topomap(ch_type='mag', normalize=False)
+    epochs_psd = np.array(epochs_psd)
+    epochs_psd = np.mean(epochs_psd, axis=3).transpose(1, 2, 0)
+    print(epochs_psd.shape)
 
-    # Plot PSD for both conditions
-    fig_concat_psd = epochs_concat.plot_psd_topomap(ch_type='mag', normalize=False)
+    # Save
+    _, save_psd = get_bids_file(RESULT_PATH, task=task, stage="psd", condition=conditions, measure=freq_name)
+    
+    with open(save_psd, "wb") as f:
+        pickle.dump(epochs_psd, f)
 
-    return fig_cond1_psd, fig_cond2_psd, fig_concat_psd
+    return epochs_psd
 
+#def compute_morlet_psd :
+    # Morlet wavelet
+    # Cycles
+    # power = tfr_morlet(epochs, freqs=freqs,
+    #                   n_cycles=n_cycles, return_itc=False)
+    
 if __name__ == "__main__" :
 
-    # Select subjects and runs and stage
-    subj_list = ["01", "02"]
-    run_list = ["07"]
-    stage = "epo"
+    # Conditions and task to compute
+    task = args.task
+    cond1 = args.condition1
+    cond2 = args.condition2
+    freq_name = args.frequency
 
-    # Select what conditions to compute (str)
-    cond1 = "LaughReal"
-    cond2 = "LaughPosed"
+    conditions = cond1 + '-' + cond2
+    condition_list = [cond1, cond2]
+    event_id = dict()
     picks = "meg" # Select MEG channels
-    event_id = {'LaughReal' : 11, 'LaughPosed' : 12}
 
-# Need to check if ave is = to this process
-epochs_cond1, epochs_cond2, epochs_concat = ave_epochs(PREPROC_PATH, subj_list, run_list, cond1, cond2, "epo")
+    for ev in EVENTS_ID :
+        for conds in condition_list :
+            if conds not in EVENTS_ID :
+                raise Exception("Condition is not an event")
+            if conds == ev :
+                event_id[conds] = EVENTS_ID[ev]
 
-fig_cond1_psd, fig_cond2_psd, fig_concat_psd = plot_PSD(epochs_cond1, epochs_cond2, epochs_concat)
+    for idx, f_name in enumerate(FREQS_NAMES) :
+        if  freq_name in f_name :
+            freq = FREQS_LIST[idx]
+
+    print("=> Process task :", task, "conditions :", cond1, "&", cond2, "frequency :", freq)
+
+    # Import ERP files path
+    _, save_epoch_concat = get_bids_file(RESULT_PATH, task=task, stage="erp-concat", condition=conditions)
+
+    with open(save_epoch_concat, "rb") as f:
+        epochs_concat = pickle.load(f)
+
+    # Need to check if ave is = to this process
+    compute_hilbert_PSD(epochs_concat, event_id, freq, freq_name, picks, task)
