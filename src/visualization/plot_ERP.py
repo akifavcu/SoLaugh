@@ -39,6 +39,9 @@ args = parser.parse_args()
 
 def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     
+    condition1.pick_types(meg=True, ref_meg = False,  exclude='bads')
+    condition2.pick_types(meg=True, ref_meg = False,  exclude='bads')
+
     # Plot each condition separately
     fig_cond1 = condition1.plot_joint(picks = picks)
     fname_cond1 = FIG_PATH + "erp/subj-all_run-all_task-{}_plot-erp_cond-{}".format(task, cond1)
@@ -52,7 +55,7 @@ def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     evoked = dict(real = condition1, posed = condition2)
     mne.viz.plot_compare_evokeds(evoked, picks = picks, combine='mean')
     fname_ERP = FIG_PATH + "ERP_cond1-" + cond1 + "_cond2-" + cond2
-    # fig_ERP.savefig(fname_ERP) # Doesn't work
+    plt.savefig(fname_ERP)
 
 
 def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, cond2) :
