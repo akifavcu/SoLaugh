@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from src.utils import get_bids_file, compute_ch_adjacency
 from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_LIST, ACTIVE_RUN, RESULT_PATH, EVENTS_ID
-from mne.stats import spatio_temporal_cluster_test, combine_adjacency
+from mne.stats import spatio_temporal_cluster_test, combine_adjacency, spatio_temporal_cluster_test, permutation_cluster_1samp_test
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -36,50 +36,6 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-# Will be moved in another file later
-def ERP(PREPROC_PATH, subj_list, task, cond1, cond2, stage) :
-    
-    epochs_concat = []
-    epochs_all_list = []
-
-    for subj in subj_list :
-        _, epochs_file = get_bids_file(PREPROC_PATH, task = task, stage = stage, subj = subj)
-        epochs = mne.read_epochs(epochs_file)
-        epochs = mne.Epochs.apply_baseline(epochs,baseline=(None,0))
-        
-        # Average each condition
-        condition1 = epochs[cond1].average()
-        condition2 = epochs[cond2].average()
-        
-        # Set manually head mouvement 
-        if subj == subj_list[0]:
-            head_info = epochs.info['dev_head_t']
-        else:
-            epochs.info['dev_head_t'] = head_info
-        
-        epochs_concat = mne.concatenate_epochs([epochs])
-        epochs_all_list.append(epochs_concat)
-        print('processing -->', subj)
-
-    epochs_save_file = mne.concatenate_epochs(epochs_all_list)
-
-    conditions = {cond1 : condition1, cond2: condition2}
-
-    # Save average condition into pkl file
-    for one_condition in conditions :
-        _, save_erp = get_bids_file(RESULT_PATH, task=task, stage = "erp", condition=one_condition)
-        with open(save_erp, 'wb') as f:
-            pickle.dump(conditions.get(one_condition), f)
-    
-    # Save concat condition into pkl file
-    conditions = cond1 + "-" + cond2
-    _, save_erp_concat = get_bids_file(RESULT_PATH, task=task, stage = "erp-concat", condition=conditions)
-    
-    with open(save_erp_concat, 'wb') as f:
-        pickle.dump(epochs_save_file, f)    
-
-    return condition1, condition2, epochs_concat
-
 def cluster_ERP(epochs, task, event_id, cond1, cond2) :
 
     # Code adapted from :
@@ -102,8 +58,10 @@ def cluster_ERP(epochs, task, event_id, cond1, cond2) :
     X = [np.transpose(x, (0, 2, 1)) for x in X]
     print([x.shape for x in X])
 
+    X = np.asarray(X)
+
     # We are running an F test, so we look at the upper tail
-    tail = 1
+    tail = 0
     alpha_cluster_forming = 0.01
 
     # For an F test we need the degrees of freedom for the numerator
@@ -119,7 +77,7 @@ def cluster_ERP(epochs, task, event_id, cond1, cond2) :
     f_thresh = scipy.stats.f.ppf(1 - alpha_cluster_forming, dfn=dfn, dfd=dfd)
 
     # run the cluster based permutation analysis
-    cluster_stats = spatio_temporal_cluster_test(X, n_permutations=1000,
+    cluster_stats =  spatio_temporal_cluster_test(X, n_permutations=10,
                                                 threshold=f_thresh, tail=tail,
                                                 n_jobs=None, buffer_size=None,
                                                 adjacency=adjacency)
@@ -138,12 +96,13 @@ if __name__ == "__main__" :
     
     # Select subjects and runs and stage
     task = args.task
-    subj_list = ["01"]
+    subj_list = ["01", '02']
     stage = "epo"
 
     # Select what conditions to compute (str)
     cond1 = args.condition1
     cond2 = args.condition2
+    conditions = conditions = cond1 + '-' + cond2
     condition_list = [cond1, cond2]
     event_id = dict()
     picks = "meg" # Select MEG channels
@@ -157,8 +116,10 @@ if __name__ == "__main__" :
 
     print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
-    # Compute ERPs
-    condition1, condition2, epochs_concat = ERP(PREPROC_PATH, subj_list, task, cond1, cond2, "proc-clean_epo")
+    _, save_erp_concat = get_bids_file(RESULT_PATH, task=task, stage="erp-concat", condition=conditions)
+    
+    with open(save_erp_concat, "rb") as f:
+        epochs_concat = pickle.load(f)
 
     # Compute ERP clusters
     F_obs, clusters, p_values = cluster_ERP(epochs_concat, task, event_id, cond1, cond2)
