@@ -54,7 +54,7 @@ def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     # Plot ERPs LaughReal vs LaughPosed
     evoked = dict(real = condition1, posed = condition2)
     mne.viz.plot_compare_evokeds(evoked, picks = picks, combine='mean', time_unit='ms')
-    fname_ERP = FIG_PATH + "erp/ERP_cond1-" + cond1 + "_cond2-" + cond2
+    fname_ERP = FIG_PATH + "erp/subj-all_run-all_task-{}_plot-erp_cond-{}-{}".format(task, cond1, cond2)
     plt.savefig(fname_ERP)
 
 
