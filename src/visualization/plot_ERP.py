@@ -42,6 +42,10 @@ def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     condition1.pick_types(meg=True, ref_meg = False,  exclude='bads')
     condition2.pick_types(meg=True, ref_meg = False,  exclude='bads')
 
+    # Average each condition
+    condition1 = condition1.average()
+    condition2 = condition2.average()
+
     # Plot each condition separately
     fig_cond1 = condition1.plot_joint(picks = picks)
     fname_cond1 = FIG_PATH + "erp/subj-all_run-all_task-{}_plot-erp_cond-{}".format(task, cond1)
