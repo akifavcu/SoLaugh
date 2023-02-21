@@ -93,7 +93,7 @@ if __name__ == "__main__" :
     
     # Select subjects and runs and stage
     task = args.task
-    subj_list = ["01", '02']
+    subj_list = SUBJ_LIST
     stage = "epo"
 
     # Select what conditions to compute (str)
