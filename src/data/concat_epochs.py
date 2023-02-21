@@ -38,9 +38,11 @@ args = parser.parse_args()
 def get_epochs(PREPROC_PATH, subj_list, event_id, task, cond1, cond2, stage) :
     
     epochs_concat = []
-    epochs_all_list = []
     epo_condition1 = []
     epo_condition2 = []
+    all_epo_cond1 = []
+    all_epo_cond2 = []
+    all_epochs_concat = []
 
     for subj in subj_list :
         print('processing -->', subj)
@@ -58,15 +60,19 @@ def get_epochs(PREPROC_PATH, subj_list, event_id, task, cond1, cond2, stage) :
             epochs.info['dev_head_t'] = head_info
         
         # Concatenate epochs regardless conditions
-        epochs_concat.append(mne.concatenate_epochs([epochs]))
+        epochs_concat.append(epochs)
 
         # Concatenate each condition separately
-        epo_condition1.append(mne.concatenate_epochs([epochs[cond1]]))
-        epo_condition2.append(mne.concatenate_epochs([epochs[cond2]]))
+        epo_condition1.append(epochs[cond1])
+        epo_condition2.append(epochs[cond2])
         del epochs
 
+    all_epo_cond1 = mne.concatenate_epochs(epo_condition1)
+    all_epo_cond2 = mne.concatenate_epochs(epo_condition2)
+    all_epochs_concat = mne.concatenate_epochs(epochs_concat)
+
     # Create a dict to optimize save files
-    conditions = {cond1 : epo_condition1, cond2: epo_condition2}
+    conditions = {cond1 : all_epo_cond1, cond2: all_epo_cond2}
 
     # Save average condition into pkl file
     for one_condition in conditions :
@@ -79,9 +85,9 @@ def get_epochs(PREPROC_PATH, subj_list, event_id, task, cond1, cond2, stage) :
     _, save_erp_concat = get_bids_file(RESULT_PATH, task=task, stage = "erp-concat", condition=conditions)
     
     with open(save_erp_concat, 'wb') as f:
-        pickle.dump(epochs_concat, f)    
+        pickle.dump(all_epochs_concat, f)    
 
-    return epo_condition1, epo_condition2, epochs_concat
+    return all_epo_cond1, all_epo_cond2, all_epochs_concat
 
 if __name__ == "__main__" :
     

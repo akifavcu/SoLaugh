@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from src.utils import get_bids_file, compute_ch_adjacency
 from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_LIST, ACTIVE_RUN, RESULT_PATH, EVENTS_ID
-from mne.stats import spatio_temporal_cluster_test, combine_adjacency, spatio_temporal_cluster_test, permutation_cluster_1samp_test
+from mne.stats import spatio_temporal_cluster_test, combine_adjacency, permutation_cluster_1samp_test
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -77,7 +77,7 @@ def cluster_ERP(epochs, task, event_id, cond1, cond2) :
     f_thresh = scipy.stats.f.ppf(1 - alpha_cluster_forming, dfn=dfn, dfd=dfd)
 
     # run the cluster based permutation analysis
-    cluster_stats =  spatio_temporal_cluster_test(X, n_permutations=10,
+    cluster_stats =  spatio_temporal_cluster_test(X, n_permutations=1000,
                                                 threshold=f_thresh, tail=tail,
                                                 n_jobs=None, buffer_size=None,
                                                 adjacency=adjacency)
@@ -96,7 +96,7 @@ if __name__ == "__main__" :
     
     # Select subjects and runs and stage
     task = args.task
-    subj_list = ["01", '02']
+    subj_list = SUBJ_LIST
     stage = "epo"
 
     # Select what conditions to compute (str)
