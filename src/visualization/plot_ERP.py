@@ -127,7 +127,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         # TODO add color for noise around signal
         #ax_signals.fill_between(times, mu_0+sd0, mu_0-sd0, facecolor=colors[0], alpha=0.5)
 
-        title = 'Cluster #{0}, {1} sensor (p < {})'.format(i_clu + 1, len(ch_inds), p_values[i_clu])
+        title = 'Cluster #{0}, {1} sensor (p < {2})'.format(i_clu + 1, len(ch_inds), p_values[i_clu])
         if len(ch_inds) > 1:
             title += "s (mean)"
         plot_compare_evokeds(evokeds, title=title, picks=ch_inds, axes=ax_signals,
