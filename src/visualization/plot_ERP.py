@@ -82,7 +82,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
                
     # loop over clusters
     for i_clu, clu_idx in enumerate(good_cluster_inds):
-        print(clu_idx)
+        print(i_clu)
         # unpack cluster information, get unique indices
         time_inds, space_inds = np.squeeze(clusters[clu_idx])
         ch_inds = np.unique(space_inds)
@@ -127,7 +127,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         # TODO add color for noise around signal
         #ax_signals.fill_between(times, mu_0+sd0, mu_0-sd0, facecolor=colors[0], alpha=0.5)
 
-        title = 'Cluster #{0}, {1} sensor (p < {})'.format(i_clu + 1, len(ch_inds), p_values[nb_cluster])
+        title = 'Cluster #{0}, {1} sensor (p < {})'.format(i_clu + 1, len(ch_inds), p_values[i_clu])
         if len(ch_inds) > 1:
             title += "s (mean)"
         plot_compare_evokeds(evokeds, title=title, picks=ch_inds, axes=ax_signals,
@@ -143,7 +143,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
-        fig.savefig(FIG_PATH + 'erp/sub-all_run-all_task-{}_cond-{}_meas-cluster_erp{}.png'.format(task, conditions, clu_idx))
+        fig.savefig(FIG_PATH + 'erp/sub-all_run-all_task-{}_cond-{}_meas-cluster_erp{}.png'.format(task, conditions, i_clu))
 
         #plt.show()
 
