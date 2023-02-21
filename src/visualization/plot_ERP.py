@@ -82,7 +82,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
                
     # loop over clusters
     for i_clu, clu_idx in enumerate(good_cluster_inds):
-        nb_cluster = 1
+        print(clu_idx)
         # unpack cluster information, get unique indices
         time_inds, space_inds = np.squeeze(clusters[clu_idx])
         ch_inds = np.unique(space_inds)
@@ -123,7 +123,11 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
 
         # add new axis for time courses and plot time courses
         ax_signals = divider.append_axes('right', size='300%', pad=1.2)
-        title = 'Cluster #{0}, {1} sensor'.format(i_clu + 1, len(ch_inds))
+
+        # TODO add color for noise around signal
+        #ax_signals.fill_between(times, mu_0+sd0, mu_0-sd0, facecolor=colors[0], alpha=0.5)
+
+        title = 'Cluster #{0}, {1} sensor (p < {})'.format(i_clu + 1, len(ch_inds), p_values[nb_cluster])
         if len(ch_inds) > 1:
             title += "s (mean)"
         plot_compare_evokeds(evokeds, title=title, picks=ch_inds, axes=ax_signals,
@@ -134,12 +138,13 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         ymin, ymax = ax_signals.get_ylim()
         ax_signals.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
                                  color='orange', alpha=0.3)
+        ax_signals.legend(loc='best')
+        
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
-        fig.savefig(FIG_PATH + 'erp/sub-all_run-all_task-{}_cond-{}_meas-cluster_erp{}.png'.format(task, conditions, nb_cluster))
+        fig.savefig(FIG_PATH + 'erp/sub-all_run-all_task-{}_cond-{}_meas-cluster_erp{}.png'.format(task, conditions, clu_idx))
 
-        nb_cluster += 1
         #plt.show()
 
 if __name__ == "__main__" :
