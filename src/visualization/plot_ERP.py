@@ -82,6 +82,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
                
     # loop over clusters
     for i_clu, clu_idx in enumerate(good_cluster_inds):
+        nb_cluster = 1
         # unpack cluster information, get unique indices
         time_inds, space_inds = np.squeeze(clusters[clu_idx])
         ch_inds = np.unique(space_inds)
@@ -133,11 +134,12 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         ymin, ymax = ax_signals.get_ylim()
         ax_signals.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
                                  color='orange', alpha=0.3)
-
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
-        fig.savefig(FIG_PATH + 'erp/sub-all_run-all_task-{}_cond-{}_meas-cluster_erp.png'.format(task, conditions))
+        fig.savefig(FIG_PATH + 'erp/sub-all_run-all_task-{}_cond-{}_meas-cluster_erp{}.png'.format(task, conditions, nb_cluster))
+
+        nb_cluster += 1
         #plt.show()
 
 if __name__ == "__main__" :
