@@ -43,14 +43,37 @@ def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
 
     for subj in SUBJ_CLEAN :
         print("processing -->", subj)
-        _, path_evoked = get_bids_file(BIDS_PATH, task=task, subj=subj, stage="ave")
+        _, path_evoked = get_bids_file(PREPROC_PATH, task=task, subj=subj, stage="ave")
         evoked = mne.read_evokeds(path_evoked)
         print(evoked)
 
+        # TODO : Find a way to optimize to put numbers
+        if task == "LaughterActive" :
+            if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
+                idx_cond1 = 0
+                idx_cond2 = 1
+            elif cond1 == 'Good' or cond1 == 'Miss' :
+                idx_cond1 = 2
+                idx_cond2 = 3
+            else :
+                return Exception('Conditions are not defined')
+        elif task == "LaughterPassive" :
+            if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
+                idx_cond1 = 0
+                idx_cond2 = 1
+            if cond1 == 'EnvReal' or cond1 == 'EnvPosed' :
+                idx_cond1 = 2
+                idx_cond2 = 4
+            if cond1 == 'ScraReal' or cond1 == 'ScraPosed' :
+                idx_cond1 = 3
+                idx_cond2 = 5
+            else :
+                return Exception('Conditions are not defined')
+
         # Drop EEg channels and equalize event number
-        contrast = mne.combine_evoked([evoked[0], evoked[1]], weights=[1, -1])
+        contrast = mne.combine_evoked([evoked[idx_cond1], evoked[idx_cond2]], weights=[1, -1])
+        contrast.pick_types(meg=True, ref_meg=False,  exclude='bads')
         contrasts_all_subject.append(contrast)
-        contrasts_all_subject.pick_types(meg=True, ref_meg=False,  exclude='bads')
 
         # Equalize trial counts to eliminate bias
         # equalize_epoch_counts([evoked_cond1, evoked_cond2])
@@ -66,18 +89,11 @@ def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
     # Obtain the data as a 3D matrix and transpose it such that
     # the dimensions are as expected for the cluster permutation test:
     # n_epochs × n_times × n_channels
-    X = np.array([contrast.data for constrast in evoked_contrast])
-    print([x.shape for x in X])
-    X = [np.transpose(x, (0, 2, 1)) for x in X]
-    print([x.shape for x in X])
+    X = np.array([contrast.data for constrast in contrasts_all_subject])
+    X = np.transpose(X, [0, 2, 1])
+    print(X.shape)
 
-    X = np.asarray(X)
-    # Note that X needs to be a multi-dimensional array of shape
-    # observations (subjects) × time × space, so we permute dimensions
-    X_bis = np.transpose(X, [2, 1, 0])
-    print(X_bis)
-
-    degrees_of_freedom = len(epochs) - 1
+    degrees_of_freedom = len(contrasts_all_subject) - 1
     t_thresh = scipy.stats.t.ppf(1 - 0.001 / 2, df=degrees_of_freedom)
 
     # Run the analysis
