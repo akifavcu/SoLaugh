@@ -41,34 +41,33 @@ def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
     
     contrasts_all_subject = []
 
+    # TODO : Find a way to optimize to put numbers
+    if task == "LaughterActive" :
+        if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
+            idx_cond1 = 0
+            idx_cond2 = 1
+        elif cond1 == 'Good' or cond1 == 'Miss' :
+            idx_cond1 = 2
+            idx_cond2 = 3
+        else :
+            return Exception('Conditions are not defined')
+    elif task == "LaughterPassive" :
+        if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
+            idx_cond1 = 0
+            idx_cond2 = 1
+        elif cond1 == 'EnvReal' or cond1 == 'EnvPosed' :
+            idx_cond1 = 2
+            idx_cond2 = 4
+        elif cond1 == 'ScraReal' or cond1 == 'ScraPosed' :
+            idx_cond1 = 3
+            idx_cond2 = 5
+        else :
+            return Exception('Conditions are not defined')
+
     for subj in SUBJ_CLEAN :
         print("processing -->", subj)
         _, path_evoked = get_bids_file(PREPROC_PATH, task=task, subj=subj, stage="ave")
         evoked = mne.read_evokeds(path_evoked)
-        print(evoked)
-
-        # TODO : Find a way to optimize to put numbers
-        if task == "LaughterActive" :
-            if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
-                idx_cond1 = 0
-                idx_cond2 = 1
-            elif cond1 == 'Good' or cond1 == 'Miss' :
-                idx_cond1 = 2
-                idx_cond2 = 3
-            else :
-                return Exception('Conditions are not defined')
-        elif task == "LaughterPassive" :
-            if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
-                idx_cond1 = 0
-                idx_cond2 = 1
-            if cond1 == 'EnvReal' or cond1 == 'EnvPosed' :
-                idx_cond1 = 2
-                idx_cond2 = 4
-            if cond1 == 'ScraReal' or cond1 == 'ScraPosed' :
-                idx_cond1 = 3
-                idx_cond2 = 5
-            else :
-                return Exception('Conditions are not defined')
 
         # Drop EEg channels and equalize event number
         contrast = mne.combine_evoked([evoked[idx_cond1], evoked[idx_cond2]], weights=[1, -1])
@@ -106,6 +105,9 @@ def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
 
     T_obs, clusters, cluster_p_values, H0 = cluster_stats
 
+    good_cluster_inds = np.where(cluster_p_values < 0.01)[0]
+    print("Good clusters: %s" % good_cluster_inds)
+
     # Save cluster stats to use it later
     conditions = cond1 + "-" + cond2
 
@@ -114,7 +116,7 @@ def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
     _, save_cluster_stats = get_bids_file(RESULT_PATH, stage = "erp-clusters", task=task, measure="Ttest-clusters", condition = conditions)
     
     with open(save_contrasts, 'wb') as f:
-        pickle.dump(evoked_contrast, f)  
+        pickle.dump(contrast, f)  
     
     with open(save_cluster_stats, 'wb') as f:
         pickle.dump(cluster_stats, f)  
