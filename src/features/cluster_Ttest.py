@@ -37,15 +37,17 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
+def compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
     
     contrasts_all_subject = []
-
+    evoked_condition1 = []
+    evoked_condition2 = []
     # TODO : Find a way to optimize to put numbers
     if task == "LaughterActive" :
         if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
             idx_cond1 = 0
             idx_cond2 = 1
+            names = 'LaughR_LaughP'
         elif cond1 == 'Good' or cond1 == 'Miss' :
             idx_cond1 = 2
             idx_cond2 = 3
@@ -55,6 +57,7 @@ def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
         if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
             idx_cond1 = 0
             idx_cond2 = 1
+            names = 'LaughR_LaughP'
         elif cond1 == 'EnvReal' or cond1 == 'EnvPosed' :
             idx_cond1 = 2
             idx_cond2 = 4
@@ -67,20 +70,29 @@ def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
     for subj in SUBJ_CLEAN :
         print("processing -->", subj)
         _, path_evoked = get_bids_file(PREPROC_PATH, task=task, subj=subj, stage="ave")
-        evoked = mne.read_evokeds(path_evoked)
+        evoked = mne.read_evokeds(path_evoked, verbose=None)
 
         # Drop EEg channels and equalize event number
+        evoked_condition1.append(evoked[idx_cond1])
+        evoked_condition2.append(evoked[idx_cond2])
+
         contrast = mne.combine_evoked([evoked[idx_cond1], evoked[idx_cond2]], weights=[1, -1])
         contrast.pick_types(meg=True, ref_meg=False,  exclude='bads')
+        contrast.resample(sfreq=300)
+        contrast.crop(tmin=-0.2)
+        contrast.filter(l_freq=1, h_freq=30)
+        contrast.comment = names
+        print(contrast.info)
         contrasts_all_subject.append(contrast)
 
         # Equalize trial counts to eliminate bias
         # equalize_epoch_counts([evoked_cond1, evoked_cond2])
-
+    print(contrasts_all_subject)
+    # Combine all subject together
     evoked_contrast = mne.combine_evoked(contrasts_all_subject, 'equal')
-
-    # Compute adjacency by using _compute_ch_adjacency function
-    # as we got 270 channels and not 275 as the CTF275 provide
+    print(evoked_contrast)
+    # Compute adjacency by using compute_ch_adjacency function
+    # as we have 270 channels and not 275 as the CTF275 template provide
     print('Computing adjacency.')
     adjacency, ch_names = compute_ch_adjacency(evoked_contrast.info, ch_type='mag')
     print(adjacency.shape)
@@ -101,7 +113,8 @@ def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
         spatio_temporal_cluster_1samp_test(X, n_permutations=1024,
                                     threshold=t_thresh, tail=0,
                                     adjacency=adjacency,
-                                    out_type='mask', verbose=True)
+                                    out_type='indices', verbose=None, 
+                                    step_down_p = 0.05, check_disjoint=True)
 
     T_obs, clusters, cluster_p_values, H0 = cluster_stats
 
@@ -109,19 +122,20 @@ def cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
     print("Good clusters: %s" % good_cluster_inds)
 
     # Save cluster stats to use it later
+    # TODO : save all subject evoked_cond1 et cond2 
     conditions = cond1 + "-" + cond2
 
     _, save_contrasts = get_bids_file(RESULT_PATH, stage = "erp-contrast", task=task, condition = conditions)
 
     _, save_cluster_stats = get_bids_file(RESULT_PATH, stage = "erp-clusters", task=task, measure="Ttest-clusters", condition = conditions)
-    
+
     with open(save_contrasts, 'wb') as f:
         pickle.dump(contrast, f)  
     
     with open(save_cluster_stats, 'wb') as f:
         pickle.dump(cluster_stats, f)  
 
-    return cluster_stats
+    return cluster_stats, contrast, evoked_contrast, evoked_condition1, evoked_condition2
 
 if __name__ == "__main__" :
     
@@ -148,4 +162,4 @@ if __name__ == "__main__" :
     print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
     # Compute ERP clusters
-    cluster_stats = cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2)
+    cluster_stats, contrast, evoked_contrast, evoked_condition1, evoked_condition2 = compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2)
