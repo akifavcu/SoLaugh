@@ -42,14 +42,12 @@ def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     
     condition1.pick_types(meg=True, ref_meg = False,  exclude='bads')
     condition2.pick_types(meg=True, ref_meg = False,  exclude='bads')
-    
+
     condition1.filter(l_freq=1, h_freq=30)
     condition1.resample(sfreq=300)
-    condition1.crop(tmin=-0.2)
     
     condition2.filter(l_freq=1, h_freq=30)
     condition2.resample(sfreq=300)
-    condition2.crop(tmin=-0.2)
     
     # Average each condition
     condition1 = condition1.average()
@@ -71,35 +69,24 @@ def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     plt.savefig(fname_ERP)
 
 
-def visualize_cluster(contrast, cluster_stats, evoked_condition1, evoked_condition2, event_id, task, conditions, cond1, cond2) :
+def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, cond2) :
     """
     Code adapted from : 
     https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
     """
-
-    _, ave_all_subjects = get_bids_file(RESULT_PATH, subj='average', task=task, stage="ave")
-    evoked_all_subjects = mne.read_evokeds(ave_all_subjects)
 
     print(evoked_all_subjects)
 
     #epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
     T_obs, clusters, p_values, _ = cluster_stats
     
-    times = contrast.times*1e3 # Set times in sec
     p_accept = 0.001
     good_cluster_inds = np.where(p_values < p_accept)[0]
-    #print("Good cluster :", good_cluster_inds)
 
     # configure variables for visualization
     colors = "crimson",'steelblue'
     linestyles = '-', '--'
 
-    # organize data for plotting
-    evoked_cond1 = np.array([event.data for event in evoked_condition1])
-    evoked_cond1 = np.transpose(evoked_cond1, (0, 2, 1))
-    evoked_cond2 = np.array([event.data for event in evoked_condition2])
-    evoked_cond2 = np.transpose(evoked_cond2, (0, 2, 1))
- 
     # loop over clusters
     for i_clu, clu_idx in enumerate(good_cluster_inds):
         # unpack cluster information, get unique indices
@@ -108,8 +95,7 @@ def visualize_cluster(contrast, cluster_stats, evoked_condition1, evoked_conditi
         time_inds = np.unique(time_inds)
 
         # Average channel from each condition
-        # ave_evoked_cond1 = evoked_cond1[..., ch_inds].mean(axis=-1)
-        # ave_evoked_cond2 = evoked_cond2[..., ch_inds].mean(axis=-1)
+        evokeds = {cond: epochs[cond].average() for cond in event_id}
 
         # get topography for F stat
         t_map = T_obs[time_inds, ...].mean(axis=0)
@@ -148,8 +134,6 @@ def visualize_cluster(contrast, cluster_stats, evoked_condition1, evoked_conditi
         ax_signals = divider.append_axes('right', size='300%', pad=1.2)
 
         # TODO add color for noise around signal
-        #ax_signals.fill_between(times, mu_0+sd0, mu_0-sd0, facecolor=colors[0], alpha=0.5)
-
         title = 'Cluster #{0}, {1} sensor(s) (p < {2})'.format(i_clu + 1, len(ch_inds), p_values[clu_idx])
 
         plot_compare_evokeds(evokeds, title=title, picks=ch_inds, axes=ax_signals,
@@ -158,26 +142,6 @@ def visualize_cluster(contrast, cluster_stats, evoked_condition1, evoked_conditi
 
         # add new axis for time courses and plot time courses
         ax_signals = divider.append_axes('right', size='300%', pad=1.2)
-
-        # Set up parameter to fill between the line
-        '''
-        mean_1, mean_2 = np.mean(ave_evoked_cond1,axis=0)* 1e15, np.mean(ave_evoked_cond2,axis=0)* 1e15
-        std_1, std_2 = sem(ave_evoked_cond1,axis=0)* 1e15, sem(ave_evoked_cond2,axis=0)* 1e15
-
-        ax_signals.plot(times, mean_1 , color=colors[0],
-                        linestyle=linestyles[0], label=cond1)
-        ax_signals.fill_between(times, mean_1+std_1, mean_1-std_1, facecolor=colors[0], alpha=0.5)
-
-        ax_signals.plot(times, mean_2 , color=colors[1],
-                        linestyle=linestyles[1], label=cond2)
-        ax_signals.fill_between(times, mean_2+std_2, mean_2-std_2, facecolor=colors[1], alpha=0.5)
-
-        # plot temporal cluster extent
-        ymin, ymax = ax_signals.get_ylim()
-        ax_signals.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
-                                 color='orange', alpha=0.3)
-        ax_signals.legend(loc='best')
-        '''
 
         # clean up viz
         mne.viz.tight_layout(fig=fig)
@@ -233,4 +197,4 @@ if __name__ == "__main__" :
     plot_ERP(condition1, condition2, cond1, cond2, task, picks)
 
     # Visualization of ERP clusters
-    visualize_cluster(contrast, cluster_stats, evoked_condition1, evoked_condition2, event_id, task, conditions, cond1, cond2)
+    visualize_cluster(epochs_concat, cluster_stats, event_id, task, conditions, cond1, cond2)
