@@ -52,7 +52,7 @@ def compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
             idx_cond1 = 2
             idx_cond2 = 3
         else :
-            return Exception('Conditions are not defined')
+            raise Exception('Conditions are not defined')
     elif task == "LaughterPassive" :
         if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
             idx_cond1 = 0
@@ -65,7 +65,7 @@ def compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
             idx_cond1 = 3
             idx_cond2 = 5
         else :
-            return Exception('Conditions are not defined')
+            raise Exception('Conditions are not defined')
 
     for subj in SUBJ_CLEAN :
         print("processing -->", subj)
@@ -100,7 +100,7 @@ def compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
     # Obtain the data as a 3D matrix and transpose it such that
     # the dimensions are as expected for the cluster permutation test:
     # n_epochs × n_times × n_channels
-    X = np.array([contrast.data for constrast in contrasts_all_subject])
+    X = np.array([c.data for c in contrasts_all_subject])
     X = np.transpose(X, [0, 2, 1])
     print(X.shape)
 
