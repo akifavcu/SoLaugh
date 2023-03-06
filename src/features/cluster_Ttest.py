@@ -47,7 +47,6 @@ def compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
         if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
             idx_cond1 = 0
             idx_cond2 = 1
-            names = 'LaughR_LaughP'
         elif cond1 == 'Good' or cond1 == 'Miss' :
             idx_cond1 = 2
             idx_cond2 = 3
@@ -78,10 +77,6 @@ def compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
 
         contrast = mne.combine_evoked([evoked[idx_cond1], evoked[idx_cond2]], weights=[1, -1])
         contrast.pick_types(meg=True, ref_meg=False,  exclude='bads')
-        contrast.resample(sfreq=300)
-        contrast.crop(tmin=-0.2)
-        contrast.filter(l_freq=1, h_freq=30)
-        contrast.comment = names
         print(contrast.info)
         contrasts_all_subject.append(contrast)
 
