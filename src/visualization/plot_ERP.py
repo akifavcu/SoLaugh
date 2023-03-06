@@ -108,8 +108,8 @@ def visualize_cluster(contrast, cluster_stats, evoked_condition1, evoked_conditi
         time_inds = np.unique(time_inds)
 
         # Average channel from each condition
-        ave_evoked_cond1 = evoked_cond1[..., ch_inds].mean(axis=-1)
-        ave_evoked_cond2 = evoked_cond2[..., ch_inds].mean(axis=-1)
+        # ave_evoked_cond1 = evoked_cond1[..., ch_inds].mean(axis=-1)
+        # ave_evoked_cond2 = evoked_cond2[..., ch_inds].mean(axis=-1)
 
         # get topography for F stat
         t_map = T_obs[time_inds, ...].mean(axis=0)
@@ -152,9 +152,9 @@ def visualize_cluster(contrast, cluster_stats, evoked_condition1, evoked_conditi
 
         title = 'Cluster #{0}, {1} sensor(s) (p < {2})'.format(i_clu + 1, len(ch_inds), p_values[clu_idx])
 
-        plot_compare_evokeds(dict(LaughReal=evoked_all_subjects[0], LaughPosed=evoked_all_subjects[1]), title=title, picks=ch_inds, axes=ax_signals,
-                             colors=colors, show=False,
-                             split_legend=True, truncate_yaxis='auto')
+        plot_compare_evokeds(evokeds, title=title, picks=ch_inds, axes=ax_signals,
+                         colors=colors, show=False,
+                         split_legend=True, truncate_yaxis='auto')
 
         # add new axis for time courses and plot time courses
         ax_signals = divider.append_axes('right', size='300%', pad=1.2)
@@ -178,6 +178,7 @@ def visualize_cluster(contrast, cluster_stats, evoked_condition1, evoked_conditi
                                  color='orange', alpha=0.3)
         ax_signals.legend(loc='best')
         '''
+
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
