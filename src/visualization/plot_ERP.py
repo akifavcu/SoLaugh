@@ -75,8 +75,6 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
     https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
     """
 
-    print(evoked_all_subjects)
-
     #epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
     T_obs, clusters, p_values, _ = cluster_stats
     
@@ -96,6 +94,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
 
         # Average channel from each condition
         evokeds = {cond: epochs[cond].average() for cond in event_id}
+        evoked.filter(l_freq=1, h_freq=30)
 
         # get topography for F stat
         t_map = T_obs[time_inds, ...].mean(axis=0)
