@@ -85,6 +85,10 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
     colors = "crimson",'steelblue'
     linestyles = '-', '--'
 
+    # organize data for plotting
+    evokeds = {cond: epochs[cond].average() for cond in event_id}
+    evoked.filter(l_freq=1, h_freq=30)
+
     # loop over clusters
     for i_clu, clu_idx in enumerate(good_cluster_inds):
         # unpack cluster information, get unique indices
@@ -92,15 +96,11 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         ch_inds = np.unique(space_inds)
         time_inds = np.unique(time_inds)
 
-        # Average channel from each condition
-        evokeds = {cond: epochs[cond].average() for cond in event_id}
-        evoked.filter(l_freq=1, h_freq=30)
-
         # get topography for F stat
         t_map = T_obs[time_inds, ...].mean(axis=0)
 
         # get signals at the sensors contributing to the cluster
-        sig_times = times[time_inds]
+        sig_times = epochs.times[time_inds]
 
         # create spatial mask
         mask = np.zeros((t_map.shape[0], 1), dtype=bool)
@@ -110,8 +110,8 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         fig, ax_topo = plt.subplots(1, 1, figsize=(10, 3))
 
         # plot average test statistic and mark significant sensors
-        f_evoked = mne.EvokedArray(t_map[:, np.newaxis], contrast.info, tmin=0)
-        f_evoked.plot_topomap(times=0, mask=mask, axes=ax_topo, cmap='Reds',
+        t_evoked = mne.EvokedArray(t_map[:, np.newaxis], contrast.info, tmin=0)
+        t_evoked.plot_topomap(times=0, mask=mask, axes=ax_topo, cmap='Reds',
                               vlim=(np.min, np.max), show=False,
                               colorbar=False, mask_params=dict(markersize=10))
 
@@ -134,14 +134,17 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
 
         # TODO add color for noise around signal
         title = 'Cluster #{0}, {1} sensor(s) (p < {2})'.format(i_clu + 1, len(ch_inds), p_values[clu_idx])
+        if len(ch_inds) > 1:
+            title += "(mean)"
 
         plot_compare_evokeds(evokeds, title=title, picks=ch_inds, axes=ax_signals,
                          colors=colors, show=False,
                          split_legend=True, truncate_yaxis='auto')
 
-        # add new axis for time courses and plot time courses
-        ax_signals = divider.append_axes('right', size='300%', pad=1.2)
-
+        # plot temporal cluster extent
+        ymin, ymax = ax_signals.get_ylim()
+        ax_signals.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
+                             color='orange', alpha=0.3)
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
