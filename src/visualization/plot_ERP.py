@@ -87,7 +87,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
 
     # organize data for plotting
     evokeds = {cond: epochs[cond].average() for cond in event_id}
-    evoked.filter(l_freq=1, h_freq=30)
+    evokeds.filter(l_freq=1, h_freq=30)
 
     # loop over clusters
     for i_clu, clu_idx in enumerate(good_cluster_inds):
