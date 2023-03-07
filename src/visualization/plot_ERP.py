@@ -49,12 +49,18 @@ def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     condition2.filter(l_freq=1, h_freq=30)
     condition2.resample(sfreq=300)
     
+    # Plot ERPs LaughReal vs LaughPosed
+    evoked = dict(real = list(condition1.iter_evoked()), posed = list(condition2.iter_evoked()))
+    mne.viz.plot_compare_evokeds(evoked, picks = picks, combine='mean', time_unit='ms')
+    fname_ERP = FIG_PATH + "erp/subj-all_run-all_task-{}_plot-erp_cond-{}-{}".format(task, cond1, cond2)
+    plt.savefig(fname_ERP)
+
     # Average each condition
     condition1 = condition1.average()
     condition2 = condition2.average()
 
     # Plot each condition separately
-    fig_cond1 = condition1.plot_joint(picks = picks)
+    fig_cond1 = condition1.plot_joint(picks = picks)    
     fname_cond1 = FIG_PATH + "erp/subj-all_run-all_task-{}_plot-erp_cond-{}".format(task, cond1)
     fig_cond1.savefig(fname_cond1)
 
@@ -62,11 +68,6 @@ def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     fname_cond2 = FIG_PATH + "erp/subj-all_run-all_task-{}_plot-erp_cond-{}".format(task, cond2)
     fig_cond2.savefig(fname_cond2)
     
-    # Plot ERPs LaughReal vs LaughPosed
-    evoked = dict(real = condition1, posed = condition2)
-    mne.viz.plot_compare_evokeds(evoked, picks = picks, combine='mean', time_unit='ms')
-    fname_ERP = FIG_PATH + "erp/subj-all_run-all_task-{}_plot-erp_cond-{}-{}".format(task, cond1, cond2)
-    plt.savefig(fname_ERP)
 
 
 def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, cond2) :
@@ -78,7 +79,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
     #epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
     T_obs, clusters, p_values, _ = cluster_stats
     
-    p_accept = 0.001
+    p_accept = 0.01
     good_cluster_inds = np.where(p_values < p_accept)[0]
 
     # configure variables for visualization
@@ -86,6 +87,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
     linestyles = '-', '--'
 
     # organize data for plotting
+    epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
     epochs.filter(l_freq=1, h_freq=30)
     evokeds = {cond: epochs[cond].average() for cond in event_id}
 
@@ -110,7 +112,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         fig, ax_topo = plt.subplots(1, 1, figsize=(10, 3))
 
         # plot average test statistic and mark significant sensors
-        t_evoked = mne.EvokedArray(t_map[:, np.newaxis], contrast.info, tmin=0)
+        t_evoked = mne.EvokedArray(t_map[:, np.newaxis], epochs.info, tmin=0)
         t_evoked.plot_topomap(times=0, mask=mask, axes=ax_topo, cmap='Reds',
                               vlim=(np.min, np.max), show=False,
                               colorbar=False, mask_params=dict(markersize=10))
@@ -148,9 +150,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
-        fig.savefig(FIG_PATH + 'erp/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_erp{}.png'.format(task, conditions, i_clu))
-
-        #plt.show()
+        plt.savefig(FIG_PATH + 'erp/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_erp{}.png'.format(task, conditions, i_clu))
 
 if __name__ == "__main__" :
 
@@ -196,7 +196,7 @@ if __name__ == "__main__" :
         cluster_stats = pickle.load(f)
 
     # Plot ERPs
-    plot_ERP(condition1, condition2, cond1, cond2, task, picks)
+    #plot_ERP(condition1, condition2, cond1, cond2, task, picks)
 
     # Visualization of ERP clusters
     visualize_cluster(epochs_concat, cluster_stats, event_id, task, conditions, cond1, cond2)
