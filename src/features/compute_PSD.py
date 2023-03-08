@@ -2,8 +2,11 @@ import mne
 import os
 import pickle
 import argparse
+import numpy as np
+import matplotlib.pyplot as plt
 from src.utils import get_bids_file
-from src.params import PREPROC_PATH, FREQS_LIST, FREQS_NAMES, EVENTS_ID, RESULT_PATH
+from src.params import PREPROC_PATH, FREQS_LIST, FREQS_NAMES, EVENTS_ID, RESULT_PATH, FIG_PATH
+from mne.time_frequency import tfr_morlet, AverageTFR
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -15,19 +18,11 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "-cond1",
-    "--condition1",
+    "-cond",
+    "--condition",
     default="LaughReal",
     type=str,
-    help="First condition",
-)
-
-parser.add_argument(
-    "-cond2",
-    "--condition2",
-    default="LaughPosed",
-    type=str,
-    help="Second condition",
+    help="Condition to compute",
 )
 
 parser.add_argument(
@@ -40,50 +35,63 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def compute_hilbert_PSD(epochs, event_id, freq, freq_name, picks, task) :
+def compute_hilbert_psd(epochs, subj, event_id, freq, freq_name, picks, task, condition) :
     # Hilbert transform
-    # Compute epoch psd for each frequency
-    # Save each epoch psd file in pickle format for each frequency
- 
+    # Separate epoch per conditions
     l_freq = freq[0]
     h_freq = freq[1]
 
     epochs_filter = epochs.copy()
+    epochs_filter.pick_types(meg=True, ref_meg=False)
     epochs_filter.filter(l_freq, h_freq, picks = picks)
-    epochs_hilbert = epochs_filter.apply_hilbert(picks = picks)
+    epochs_hilbert = epochs_filter.apply_hilbert(picks = picks, envelope=True)
     
-    # Separate epoch per conditions
-    # We concatenate psd data for each freq
-    epochs_psd.append(epochs_hilbert.get_data())
-
-    epochs_psd = np.array(epochs_psd)
-    epochs_psd = np.mean(epochs_psd, axis=3).transpose(1, 2, 0)
-    print(epochs_psd.shape)
+    tfr_data = epochs_hilbert.get_data()
+    tfr_data = tfr_data * tfr_data.conj()  # compute power
+    tfr_data = np.mean(tfr_data, axis=0)  # average over epochs
+    data[:, idx] = tfr_data
+    power = AverageTFR(info, data, epochs.times, freq, nave=n_epochs)
 
     # Save
-    _, save_psd = get_bids_file(RESULT_PATH, task=task, stage="psd", condition=conditions, measure=freq_name)
+    _, save_psd = get_bids_file(RESULT_PATH, subj = subj, task=task, stage="psd-hilbert", condition=condition, measure=freq_name)
     
     with open(save_psd, "wb") as f:
         pickle.dump(epochs_psd, f)
 
-    return epochs_psd
+    return tfr_data
 
-#def compute_morlet_psd :
-    # Morlet wavelet
-    # Cycles
-    # power = tfr_morlet(epochs, freqs=freqs,
-    #                   n_cycles=n_cycles, return_itc=False)
+def compute_morlet_psd(epochs, event_id, freq, freq_name, picks, task, condition) :
     
+    epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
+
+    # Morlet wavelet
+    n_cycles = freq / 2.
+    power = tfr_morlet(epochs, freqs=freq,
+                    n_cycles=n_cycles, return_itc=False, average=True, picks=picks)
+    print(type(power))
+    print(power)
+
+    _, save_psd = get_bids_file(RESULT_PATH, task=task, stage="psd-morlet", condition=condition, measure=freq_name)
+    
+    with open(save_psd, "wb") as f:
+        pickle.dump(power, f)
+
+    power.plot([0], baseline=(0., 0.1), mode='mean', vmin=-3, vmax=3,
+              title='Using Morlet wavelets and EpochsTFR', show=False)
+              
+    plt.savefig(FIG_PATH + 'subj-all_task-{}_cond-{}_meas-PSD-Morlet.png')
+    plt.show()
+
+    return power
+
 if __name__ == "__main__" :
 
     # Conditions and task to compute
     task = args.task
-    cond1 = args.condition1
-    cond2 = args.condition2
+    condition = args.condition
     freq_name = args.frequency
 
-    conditions = cond1 + '-' + cond2
-    condition_list = [cond1, cond2]
+    condition_list = [condition]
     event_id = dict()
     picks = "meg" # Select MEG channels
 
@@ -97,14 +105,12 @@ if __name__ == "__main__" :
     for idx, f_name in enumerate(FREQS_NAMES) :
         if  freq_name in f_name :
             freq = FREQS_LIST[idx]
+            freq = np.asarray(freq)
 
-    print("=> Process task :", task, "conditions :", cond1, "&", cond2, "frequency :", freq)
 
-    # Import ERP files path
-    _, save_epoch_concat = get_bids_file(RESULT_PATH, task=task, stage="erp-concat", condition=conditions)
-
-    with open(save_epoch_concat, "rb") as f:
-        epochs_concat = pickle.load(f)
-
-    # Need to check if ave is = to this process
-    compute_hilbert_PSD(epochs_concat, event_id, freq, freq_name, picks, task)
+    for subj in SUBJ_CLEAN :
+        print("=> Process task :", task, "condition :", condition, "frequency :", freq)
+        epochs_path = get_bids_file(PREPROC_PATH, stage='proc-clean_epo', task=task)
+        epochs = mne.read_epochs(epochs_path)
+        
+        epochs_psd = compute_hilbert_psd(epochs, subj, event_id, freq, freq_name, picks, task, condition)
