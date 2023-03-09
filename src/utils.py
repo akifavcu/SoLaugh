@@ -37,7 +37,7 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
         laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), 
         "ses-recording", "meg", laughter_bidsname)
     
-    elif stage == "filt_raw" :
+    elif stage == "proc-filt_raw" :
 
         extension = ".fif"
 
