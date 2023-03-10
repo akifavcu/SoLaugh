@@ -35,12 +35,14 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def compute_hilbert_psd(raw, subj, event_id, freq, freq_name, picks, task, condition) :
+def compute_hilbert_psd(raw, subj, event_id, freq_name, picks, task, condition) :
     # Hilbert transform
-    # TODO: loop for each freq
     epochs_psds = []
 
     for l_freq, h_freq in FREQS_LIST :
+
+        for idx, f_nb in enumerate(FREQS_LIST) :
+            freq_name = FREQS_NAMES[idx]
 
         raw_filter = raw.copy()
         raw_filter.filter(l_freq, h_freq)
@@ -50,7 +52,7 @@ def compute_hilbert_psd(raw, subj, event_id, freq, freq_name, picks, task, condi
 
         # Segmentation
         events = mne.find_events(raw)
-        epochs = mne.Epochs(
+        epochs_hilb = mne.Epochs(
             raw_hilbert,
             events=events,
             event_id=event_id,
@@ -59,18 +61,21 @@ def compute_hilbert_psd(raw, subj, event_id, freq, freq_name, picks, task, condi
             baseline=(None, 0),
             picks=picks)
 
-        epochs_psds.append(epochs.get_data())
-
-        # Save psd file fior each freq
-        _, save_psd = get_bids_file(RESULT_PATH, subj = subj, task=task, stage="psd-hilbert", condition=condition, measure=freq_name)
-        
-        with open(save_psd, "wb") as f:
-            pickle.dump(epochs, f)
+        # Drop bad epochs
+        tfr_data = epochs_hilb.get_data()
+        tfr_data = tfr_data * tfr_data.conj()  # compute power
+        tfr_data = np.mean(tfr_data, axis=0)  # average over epochs
+        epochs_psds.append(tfr_data) # append each freq range power
    
     epochs_psds = np.array(epochs_psds)
-    epochs_psds = np.mean(epochs_psds, axis=3).transpose(1, 2, 0)
 
     print(epochs_psds.shape)
+
+    # Save psd file fior each freq
+    _, save_psd = get_bids_file(RESULT_PATH, subj = subj, task=task, stage="psd-hilbert", condition=condition, measure=freq_name)
+    
+    with open(save_psd, "wb") as f:
+        pickle.dump(epochs_psds, f)
 
     return epochs_psds
 
@@ -92,11 +97,6 @@ if __name__ == "__main__" :
             if conds == ev :
                 event_id[conds] = EVENTS_ID[ev]
 
-    for idx, f_name in enumerate(FREQS_NAMES) :
-        if  freq_name in f_name :
-            freq = FREQS_LIST[idx]
-            freq = list(freq)
-
     for subj in SUBJ_CLEAN :
         print("=> Process task :", task, "condition :", condition, "frequency :", freq)
         for run in RUN_LIST :
@@ -104,4 +104,4 @@ if __name__ == "__main__" :
             _, raw_path = get_bids_file(PREPROC_PATH, stage='proc-filt_raw', task=task, run=run, subj=subj)
             raw = mne.io.read_raw_fif(raw_path, preload=True)
         
-            epochs_psd = compute_hilbert_psd(raw, subj, event_id, freq, freq_name, task, condition)
+            epochs_psd = compute_hilbert_psd(raw, subj, event_id, freq_name, task, condition)
