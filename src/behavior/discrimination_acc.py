@@ -220,45 +220,6 @@ def stat_RT(df) :
 
     return result_RT_anovarm
 
-def plot_perf(df) : 
-
-    '''
-    TODO : change figure for sns
-    Plot behavioral results figures
-    
-    '''
-
-    grouped_laugh = df.groupby(['subID', 'response', 'active_laughType']).count()
-
-    grouped_RT = df.groupby(['subID', 'response', 'active_laughType']).mean()
-
-    # Plot differences between hit and false
-    grouped_laugh.boxplot(column = 'nb_resp', by = ['response'])
-    plt.ylabel('Number of answer')
-    plt.title('Overall performance')
-    plt.savefig(BEHAV_PATH + 'subj-all_task-LaughterActive_plot-nbresponse.png')
-    plt.show()
-
-    # Plot differences between laughter type performance
-    grouped_laugh.boxplot(column = 'nb_resp', by = ['response', 'active_laughType'])
-    plt.ylabel('Number of answer')
-    plt.title('Performance for each type of laughter')
-    plt.savefig(BEHAV_PATH + 'subj-all_task-LaughterActive_plot-real-posed.png')
-    plt.show()
-
-    # Plot differences between RT for each laughter types
-    grouped_RT.boxplot(column = 'RT', by = ['active_laughType'])
-    plt.ylabel('RT (sec)')
-    plt.title('RT for each type of laughter')
-    plt.savefig(BEHAV_PATH + 'subj-all_task-LaughterActive_plot-RT-real-posed.png')
-    plt.show()
-
-    # Plot differences between RT for correct and error responses
-    sns.boxplot(data = df, x= 'response', y = 'RT') 
-    plt.ylabel('RT (sec)')
-    plt.title('RT for each response category')
-    plt.savefig(BEHAV_PATH + 'subj-all_task-LaughterActive_plot-RT-correct-error.png')
-    plt.show()
 
 if __name__ == '__main__' :
 
