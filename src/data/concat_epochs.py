@@ -5,7 +5,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from src.utils import get_bids_file
-from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_LIST, ACTIVE_RUN, RESULT_PATH, EVENTS_ID
+from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_CLEAN, ACTIVE_RUN, RESULT_PATH, EVENTS_ID
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -93,7 +93,7 @@ if __name__ == "__main__" :
     
     # Select subjects and runs and stage
     task = args.task
-    subj_list = SUBJ_LIST
+    subj_list = SUBJ_CLEAN
     stage = "epo"
 
     # Select what conditions to compute (str)
