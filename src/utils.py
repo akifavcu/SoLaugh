@@ -29,7 +29,8 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
     or stage == "ica"
     or stage == "cov"  
     or stage == "ica_epo"
-    or stage == "proc-clean_epo") : 
+    or stage == "proc-clean_epo"
+    or stage == "psd") : 
 
         extension = ".fif"
 
