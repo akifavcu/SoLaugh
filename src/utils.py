@@ -62,7 +62,7 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
                 laughter_bidsname = "sub-{}_run-{}_task-{}_{}_cond-{}_meas-{}{}".format(subj, run, 
                                                                                         task, stage, condition,
                                                                                         measure, extension)
-                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", "epochs", folder, laughter_bidsname)
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", "sub-all", folder, laughter_bidsname)
         else :
             raise Exception("Missing argument : conditions")
 
