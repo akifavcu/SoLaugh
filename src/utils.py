@@ -29,8 +29,7 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
     or stage == "ica"
     or stage == "cov"  
     or stage == "ica_epo"
-    or stage == "proc-clean_epo"
-    or stage == "psd") : 
+    or stage == "proc-clean_epo") : 
 
         extension = ".fif"
 
@@ -45,26 +44,30 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
         laughter_bidsname = "sub-{}_ses-recording_task-{}_run-{}_{}{}".format(subj, task, run, stage, extension)
         laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), "ses-recording", "meg", laughter_bidsname)
 
-    # ERPs and PSD files
-    
-    elif ("psd" in stage or "erp" in stage) :
+    # Epochs and PSD files
+    elif ("psd" in stage 
+    or "epochs" in stage) :
 
-        folder = stage[0:3]
-        extension = ".pkl"
+        folder = 'sub-' + subj
+        if 'epochs' in stage : 
+            extension = ".pkl"
+        elif 'psd' in stage :
+            extension = '.fif'
 
         if condition != None :
             if measure == None :
                 laughter_bidsname = "sub-{}_run-{}_task-{}_{}_cond-{}{}".format(subj, run, task, 
                                                                                 stage, condition, extension)
 
-                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", "epochs", folder, laughter_bidsname)
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, 'erp', laughter_bidsname)
             else :
                 laughter_bidsname = "sub-{}_run-{}_task-{}_{}_cond-{}_meas-{}{}".format(subj, run, 
                                                                                         task, stage, condition,
                                                                                         measure, extension)
-                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", "sub-all", folder, laughter_bidsname)
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
         else :
             raise Exception("Missing argument : conditions")
+
 
     return laughter_bidsname, laughter_bidspath
 
