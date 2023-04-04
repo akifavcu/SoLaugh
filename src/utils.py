@@ -45,11 +45,12 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
         laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), "ses-recording", "meg", laughter_bidsname)
 
     # Epochs and PSD files
+    # TODO : change epochs =>
     elif ("psd" in stage 
-    or "epochs" in stage) :
+    or "erp" in stage) :
 
         folder = 'sub-' + subj
-        if 'epochs' in stage : 
+        if 'erp' in stage : 
             extension = ".pkl"
         elif 'psd' in stage :
             extension = '.fif'
