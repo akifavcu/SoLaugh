@@ -60,7 +60,7 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
                 laughter_bidsname = "sub-{}_run-{}_task-{}_{}_cond-{}{}".format(subj, run, task, 
                                                                                 stage, condition, extension)
 
-                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, 'erp', laughter_bidsname)
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
             else :
                 laughter_bidsname = "sub-{}_run-{}_task-{}_{}_cond-{}_meas-{}{}".format(subj, run, 
                                                                                         task, stage, condition,
