@@ -18,9 +18,9 @@ PASSIVE_RUN = RUN_LIST[1:5] # Select runs 02 to 05
 ACTIVE_RUN = RUN_LIST[6:13] # Select runs 07 to 12
 RS_RUN = ['01', '06'] # Resting state
 
-EVENTS_ID = {'LaughReal' : 11, 'LaughPosed' : 12, 'Good' : 99, 'Miss' : 66, 
-            'OffSet' : 5, 'EnvReal' : 21, 'ScraReal' : 31, 'EnvPosed' : 22,
-            'ScraPosed' : 32, 'Start' : 68}
+EVENTS_ID = {'Laugh/Real' : 11, 'Laugh/Posed' : 12, 'Good' : 99, 'Miss' : 66, 
+            'OffSet' : 5, 'Env/Real' : 21, 'Scra/Real' : 31, 'Env/Posed' : 22,
+            'Scra/Posed' : 32, 'Start' : 68}
 
 FREQS_LIST = [ [2, 4], [4, 8], [8, 12], [12, 30], [30, 120] ]
 FREQS_NAMES = ['delta', 'theta', 'alpha', 'beta', 'gamma']

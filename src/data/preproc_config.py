@@ -74,8 +74,9 @@ baseline = (None, 0)
 
 # Conditions / events to consider when epoching
 if task == "LaughterActive" : 
-    rename_events = {'Bad' : 'Miss'}
-    conditions = ['LaughReal', 'LaughPosed', 'Good', 'Miss']
+    rename_events = {'LaughReal' : 'Laugh/Real', 'LaughPosed' : 'Laugh/Posed', 
+                    'Bad' : 'Miss'}
+    conditions = ['Laugh/Real', 'Laugh/Posed', 'Good', 'Miss']
     event_repeated = 'drop'
 
     # Decoding
@@ -87,7 +88,10 @@ if task == "LaughterActive" :
     decoding_csp = False
 
 elif task == "LaughterPassive" :
-    conditions = ['EnvReal', 'ScraReal', 'EnvPosed','ScraPosed']
+    rename_events = {'LaughReal' : 'Laugh/Real', 'LaughPosed' : 'Laugh/Posed', 
+                    'EnvReal' : 'Env/Real', 'EnvPosed' : 'Env/Posed',
+                    'ScraReal' : 'Scra/Real', 'ScraPosed' : 'Scra/Posed'}
+    conditions = ['Env/Real', 'Scra/Real', 'Env/Posed','Scra/Posed']
     event_repeated = 'drop'
     
     # Decoding
