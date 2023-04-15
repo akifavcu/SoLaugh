@@ -22,7 +22,7 @@ parser.add_argument(
 parser.add_argument(
     "-cond1",
     "--condition1",
-    default="LaughReal",
+    default="Laugh/Real",
     type=str,
     help="First condition",
 )
@@ -30,7 +30,7 @@ parser.add_argument(
 parser.add_argument(
     "-cond2",
     "--condition2",
-    default="LaughPosed",
+    default="Laugh/Posed",
     type=str,
     help="Second condition",
 )
@@ -42,50 +42,23 @@ def compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
     contrasts_all_subject = []
     evoked_condition1 = []
     evoked_condition2 = []
-    # TODO : Find a way to optimize to put numbers
-    if task == "LaughterActive" :
-        if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
-            idx_cond1 = 0
-            idx_cond2 = 1
-        elif cond1 == 'Good' or cond1 == 'Miss' :
-            idx_cond1 = 2
-            idx_cond2 = 3
-        else :
-            raise Exception('Conditions are not defined')
-    elif task == "LaughterPassive" :
-        if cond1 == 'LaughReal' or cond1 == 'LaughPosed' :
-            idx_cond1 = 0
-            idx_cond2 = 1
-            names = 'LaughR_LaughP'
-        elif cond1 == 'EnvReal' or cond1 == 'EnvPosed' :
-            idx_cond1 = 2
-            idx_cond2 = 4
-        elif cond1 == 'ScraReal' or cond1 == 'ScraPosed' :
-            idx_cond1 = 3
-            idx_cond2 = 5
-        else :
-            raise Exception('Conditions are not defined')
 
     for subj in SUBJ_CLEAN :
         print("processing -->", subj)
-        _, path_evoked = get_bids_file(PREPROC_PATH, task=task, subj=subj, stage="ave")
-        evoked = mne.read_evokeds(path_evoked, verbose=None)
+        _, path_epochs = get_bids_file(PREPROC_PATH, task=task, subj=subj, stage="epo")
+        epochs = mne.read_epochs(path_epochs, verbose=None)
 
         # Drop EEg channels and equalize event number
-        evoked_condition1.append(evoked[idx_cond1])
-        evoked_condition2.append(evoked[idx_cond2])
+        evoked_condition1.append(epochs[cond1].average()) 
+        evoked_condition2.append(epochs[cond2].average())
 
-        contrast = mne.combine_evoked([evoked[idx_cond1], evoked[idx_cond2]], weights=[1, -1])
+        contrast = mne.combine_evoked([epochs[cond1].average(), epochs[cond2].average()], weights=[1, -1])
         contrast.pick_types(meg=True, ref_meg=False,  exclude='bads')
-        print(contrast.info)
         contrasts_all_subject.append(contrast)
 
-        # Equalize trial counts to eliminate bias
-        # equalize_epoch_counts([evoked_cond1, evoked_cond2])
-    print(contrasts_all_subject)
     # Combine all subject together
     evoked_contrast = mne.combine_evoked(contrasts_all_subject, 'equal')
-    print(evoked_contrast)
+
     # Compute adjacency by using compute_ch_adjacency function
     # as we have 270 channels and not 275 as the CTF275 template provide
     print('Computing adjacency.')
