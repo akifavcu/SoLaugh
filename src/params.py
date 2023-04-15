@@ -12,6 +12,9 @@ FIG_PATH = RESULT_PATH + "meg/reports/figures/"
 # Task parameters
 SUBJ_LIST = [str(i).zfill(2) for i in range(1, 33)] 
 SUBJ_LIST.remove('17') #S17 did not finish the task
+SUBJ_CLEAN = SUBJ_LIST.remove('26')
+SUBJ_CLEAN = SUBJ_LIST.remove('27')
+SUBJ_CLEAN = SUBJ_LIST.remove('29')
 
 RUN_LIST = [str(i).zfill(2) for i in range(1, 13)]
 PASSIVE_RUN = RUN_LIST[1:5] # Select runs 02 to 05
