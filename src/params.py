@@ -2,11 +2,11 @@ import os
 
 # Paths 
 DISK_PATH = "/run/media/clara_elk/Clara_Seagate/SoLaugh_AL/0_RAW_DATA/"
-BIDS_PATH = "/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/bids_data/"
-RESULT_PATH = "/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/results/"
-PREPROC_PATH = "/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/preproc/"
-PERF_PATH = "/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/perf/solaugh_task/results_active/"
-BEHAV_PATH = RESULT_PATH + "behavior/active_task/"
+BIDS_PATH = "/home/claraelk/scratch/laughter_data/bids_data/"
+RESULT_PATH = "/home/claraelk/scratch/laughter_data/results/"
+PREPROC_PATH = "/home/claraelk/scratch/laughter_data/preproc/"
+PERF_PATH = "/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/PERF/solaugh_task/results_active/"
+BEHAV_PATH = RESULT_PATH + "discrimination/behavior"
 FIG_PATH = RESULT_PATH + "meg/reports/figures/"
 
 # Task parameters
