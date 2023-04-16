@@ -91,13 +91,13 @@ elif task == "LaughterPassive" :
     if runs == '02' or runs == '03' :
         rename_events = {'LaughReal' : 'Laugh/Real', 'LaughPosed' : 'Laugh/Posed', 
                         'EnvReal' : 'Env/Real', 'EnvPosed' : 'Env/Posed'}
-        conditions = ['Laugh/Real', 'Laugh/Posed']
-        event_repeated = 'drop'
+
     elif runs == '04' or runs == '05':
         rename_events = {'LaughReal' : 'Laugh/Real', 'LaughPosed' : 'Laugh/Posed', 
                         'ScraReal' : 'Scra/Real', 'ScraPosed' : 'Scra/Posed'}
-        conditions = ['Laugh/Real', 'Laugh/Posed']
-        event_repeated = 'drop'
+    
+    conditions = ['Laugh/Real', 'Laugh/Posed']
+    event_repeated = 'drop'
     
     # Decoding
     decode = False
