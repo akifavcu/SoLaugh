@@ -130,4 +130,4 @@ if __name__ == "__main__" :
             event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'EnvReal' : 21, 'ScraReal' : 31, 
                         'EnvPosed' : 22, 'ScraPosed' : 32,}
         
-    epochs_psd = compute_hilbert_psd(SUBJ_CLEAN, run, event_id, task, FREQS_LIST)
+    epochs_psd = compute_hilbert_psd(subj=SUBJ_CLEAN, run=RUN_LIST, event_id=event_id, task=task, FREQS_LIST=FREQS_LIST)
