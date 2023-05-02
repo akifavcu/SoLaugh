@@ -58,7 +58,7 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
 
                     epochs_psds = []
 
-                    freq_name = FREQS_NAMES[freq]
+                    freq_name = FREQS_NAMES[FREQS]
 
                     info = raw.info
                     raw_filter = raw.copy()
