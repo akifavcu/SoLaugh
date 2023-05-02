@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from src.utils import get_bids_file
-from src.params import PREPROC_PATH, FREQS_LIST, FREQS_NAMES, EVENTS_ID, RESULT_PATH, SUBJ_CLEAN
+from src.params import PREPROC_PATH, FREQS_LIST, FREQS_NAMES, EVENTS_ID, RESULT_PATH, SUBJ_CLEAN, ACTIVE_RUN, PASSIVE_RUN
 from mne.time_frequency import (tfr_morlet, AverageTFR)
 
 parser = argparse.ArgumentParser()
@@ -134,7 +134,11 @@ if __name__ == "__main__" :
     # Conditions and task to compute
     task = args.task
     SUBJ_LIST = args.subj
-    RUN_LIST = args.run
+    
+    if task == 'LaughterActive' :
+        RUN_LIST = ACTIVE_RUN
+    elif task == 'LaughterPassive':
+        RUN_LIST = PASSIVE_RUN
 
     for ev in EVENTS_ID :
         if task == 'LaughterActive' :
