@@ -98,7 +98,7 @@ def compute_hilbert_psd(subj, run, event_id, task, FREQS_LIST) :
                     stage = 'psd'
                     extension = '.fif'
                     # TODO : All epochs files should end with -epo.fif, -epo.fif.gz, _epo.fif or _epo.fif.gz
-                    psd_path = get_bids_file(RESULT_PATH, subj, stage, task, measure=freq_name)
+                    _, psd_path = get_bids_file(RESULT_PATH, subj, stage, task, measure=freq_name)
                     epochs_hilb.save(psd_path, overwrite=True)
                     
                     # Create Evokeds per run
