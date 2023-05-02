@@ -54,6 +54,7 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
             extension = ".pkl"
         elif 'psd' in stage :
             extension = '.fif'
+            stage = 'psd_epo'
 
         if condition != None :
             if measure == None :
@@ -67,7 +68,16 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
                                                                                         measure, extension)
                 laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
         else :
-            raise Exception("Missing argument : conditions")
+            if measure == None :
+                laughter_bidsname = "sub-{}_run-{}_task-{}_{}{}".format(subj, run, task, 
+                                                                        stage, extension)
+
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
+            else :
+                laughter_bidsname = "sub-{}_run-{}_task-{}_meas-{}_{}{}".format(subj, run, 
+                                                                                task,
+                                                                                measure, stage, extension)
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
 
 
     return laughter_bidsname, laughter_bidspath
