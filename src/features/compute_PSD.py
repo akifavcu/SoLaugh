@@ -19,7 +19,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def compute_hilbert_psd(subj, run, event_id, task, FREQS_LIST) :
+def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
     
     power_list = []
     FREQS = [x for x in range(len(FREQS_LIST))]
@@ -30,7 +30,7 @@ def compute_hilbert_psd(subj, run, event_id, task, FREQS_LIST) :
             
             list_evo_subj = []
 
-            for subj in SUBJ_LIST:
+            for subj in SUBJ_CLEAN:
                 print("=> Process task :", task, 'subject', subj)
 
                 sub_id = 'sub-' + subj
@@ -130,4 +130,4 @@ if __name__ == "__main__" :
             event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'EnvReal' : 21, 'ScraReal' : 31, 
                         'EnvPosed' : 22, 'ScraPosed' : 32,}
         
-    epochs_psd = compute_hilbert_psd(subj=SUBJ_CLEAN, run=RUN_LIST, event_id=event_id, task=task, FREQS_LIST=FREQS_LIST)
+    epochs_psd = compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id=event_id, task=task, FREQS_LIST=FREQS_LIST)
