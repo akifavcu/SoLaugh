@@ -17,22 +17,6 @@ parser.add_argument(
     help="Task to process",
 )
 
-parser.add_argument(
-    "-subj",
-    "--subject",
-    default=SUBJ_CLEAN,
-    type=list,
-    help="Subject to compute",
-)
-
-parser.add_argument(
-    "-run",
-    "--runs",
-    default=ACTIVE_RUN,
-    type=list,
-    help="Runs to compute",
-)
-
 args = parser.parse_args()
 
 def compute_hilbert_psd(subj, run, event_id, task, FREQS_LIST) :
@@ -133,7 +117,6 @@ if __name__ == "__main__" :
 
     # Conditions and task to compute
     task = args.task
-    SUBJ_LIST = args.subj
     
     if task == 'LaughterActive' :
         RUN_LIST = ACTIVE_RUN
@@ -147,4 +130,4 @@ if __name__ == "__main__" :
             event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'EnvReal' : 21, 'ScraReal' : 31, 
                         'EnvPosed' : 22, 'ScraPosed' : 32,}
         
-    epochs_psd = compute_hilbert_psd(subj, run, event_id, task, FREQS_LIST)
+    epochs_psd = compute_hilbert_psd(SUBJ_CLEAN, run, event_id, task, FREQS_LIST)
