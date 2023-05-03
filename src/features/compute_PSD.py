@@ -16,6 +16,13 @@ parser.add_argument(
     type=str,
     help="Task to process",
 )
+parser.add_argument(
+    "-psd",
+    "--timefreq",
+    default="morlet",
+    type=str,
+    help="Time Frequency analysis",
+)
 
 args = parser.parse_args()
 
@@ -113,11 +120,56 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
 
     return epochs_hilb
 
+def compute_morlet_psd(SUBJ_CLEAN, task, event_id) :
+    all_evoked = [] 
+    
+    for i, condition in enumerate(event_id.keys()):
+        for subj in SUBJ_CLEAN:
+            print("=> Process task :", task, 'subject', subj)
+
+            _, epo_path = get_bids_file(PREPROC_PATH, stage='proc-clean_epo', task=task, subj=subj)
+            epochs = mne.read_epochs(epo_path)
+
+            # Average for one condition
+            all_evoked.append(epochs[condition].average())
+
+        # Combine all subjects
+        evokeds = mne.combine_evoked(all_evoked, weights='equal')
+
+        # Compute freqs from 2 - 60 Hz
+        freqs = np.logspace(*np.log10([2, 60]))
+        n_cycles = freqs / 2.  # different number of cycle per frequency
+        power = tfr_morlet(evokeds, freqs=freqs, n_cycles=n_cycles, use_fft=True,
+                                return_itc=False, decim=3, n_jobs=None)
+        
+        # Plot topomaps
+        fig_path = FIG_PATH + 'psd/subj-all_task-{}_cond-{}_meas-morletPSD_topomap'.format(task, condition)
+        title_fig = 'Topomaps Morlet wavelet - condition {} - task {}'.format(condition, task)
+        fig, axes = plt.subplots(1, 5, figsize=(30, 10))
+        topomap_kw = dict(ch_type='mag', tmin=0.5, tmax=1.5, baseline=(-0.5, 0),
+                        mode='logratio', show=False)
+        
+        plot_dict = dict(Delta=dict(fmin=2, fmax=4), Theta=dict(fmin=5, fmax=7),
+                        Alpha=dict(fmin=8, fmax=12), Beta=dict(fmin=13, fmax=25),
+                        Gamma=dict(fmin=26, fmax=60))
+        
+        for ax, (title, fmin_fmax) in zip(axes, plot_dict.items()):
+            power.plot_topomap(**fmin_fmax, axes=ax, **topomap_kw)
+            ax.set_title(title)
+
+        plt.suptitle(title_fig, size = 30)
+        fig.tight_layout()
+        fig.savefig(fig_path)
+        #fig.show()     
+    
+    return power
+
 if __name__ == "__main__" :
 
     # Conditions and task to compute
     task = args.task
-    
+    psd = args.psd
+
     if task == 'LaughterActive' :
         RUN_LIST = ACTIVE_RUN
     elif task == 'LaughterPassive':
@@ -130,4 +182,8 @@ if __name__ == "__main__" :
             event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'EnvReal' : 21, 'ScraReal' : 31, 
                         'EnvPosed' : 22, 'ScraPosed' : 32,}
         
-    epochs_psd = compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id=event_id, task=task, FREQS_LIST=FREQS_LIST)
+    if psd == 'hilbert' : 
+        epochs_psd = compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id=event_id, task=task, FREQS_LIST=FREQS_LIST)
+    
+    elif psd == 'morlet' : 
+        power = compute_morlet_psd(SUBJ_CLEAN, task=task, event_id=event_id)
