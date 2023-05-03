@@ -1,3 +1,4 @@
+# importations
 import os
 
 # Paths 
