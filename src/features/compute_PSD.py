@@ -18,12 +18,11 @@ parser.add_argument(
 )
 parser.add_argument(
     "-psd",
-    "--timefreq",
+    "--psd",
     default="morlet",
     type=str,
     help="Time Frequency analysis",
 )
-
 args = parser.parse_args()
 
 def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
