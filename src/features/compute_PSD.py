@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from src.utils import get_bids_file
-from src.params import PREPROC_PATH, FREQS_LIST, FREQS_NAMES, EVENTS_ID, RESULT_PATH, SUBJ_CLEAN, ACTIVE_RUN, PASSIVE_RUN
+from src.params import PREPROC_PATH, FREQS_LIST, FREQS_NAMES, EVENTS_ID, RESULT_PATH, SUBJ_CLEAN, ACTIVE_RUN, PASSIVE_RUN, FIG_PATH
 from mne.time_frequency import (tfr_morlet, AverageTFR)
 
 parser = argparse.ArgumentParser()
