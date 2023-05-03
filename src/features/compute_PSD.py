@@ -128,6 +128,7 @@ def compute_morlet_psd(SUBJ_CLEAN, task, event_id) :
 
             _, epo_path = get_bids_file(PREPROC_PATH, stage='proc-clean_epo', task=task, subj=subj)
             epochs = mne.read_epochs(epo_path)
+            epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
 
             # Average for one condition
             all_evoked.append(epochs[condition].average())
