@@ -25,7 +25,7 @@ print("--> Process task :", task)
 path = '/home/claraelk/scratch/laughter_data/results/meg/reports/sub-all/erp/'
 
 print('--> Read epochs condition 1')
-epo_name1, _ = get_bids_file(PREPROC_PATH, stage='erp', task=task, subj=subj, condition=cond1)
+epo_name1, _ = get_bids_file(PREPROC_PATH, stage='erp', task=task, condition=cond1)
 epochs_cond1 = mne.read_epochs(path + epo_name1)
 epochs_cond1.pick_types(meg=True, ref_meg = False,  exclude='bads')
 
