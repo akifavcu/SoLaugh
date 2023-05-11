@@ -2,7 +2,7 @@
 #SBATCH --account=def-kjerbi
 #SBATCH --time=12:00:00
 #SBATCH --job-name=SoLaughPSD
-#SBATCH --mem=200G
+#SBATCH --mem=254G
 
 module load python/3.10
 
