@@ -34,8 +34,6 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
     for l_freq, h_freq in FREQS_LIST :
         print('Processing freqs -->', l_freq, h_freq)
         
-        list_evo_subj = []
-
         for subj in SUBJ_CLEAN:
             print("=> Process task :", task, 'subject', subj)
 
@@ -51,9 +49,7 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
             # Take ica data
             _, ica_path = get_bids_file(PREPROC_PATH, stage='ica', subj=subj)
             ica = mne.preprocessing.read_ica(ica_path)
-            
-            list_evo_run = []
-            
+                        
             for run in RUN_LIST :
                 print("=> Process run :", run)
                 
@@ -86,35 +82,14 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
                                 
                 # Save epochs
                 stage = 'psd'
-                # TODO : All epochs files should end with -epo.fif, -epo.fif.gz, _epo.fif or _epo.fif.gz
-                _, psd_path = get_bids_file(RESULT_PATH, stage=stage, subj=subj, task=task, measure=freq_name)
+                _, psd_path = get_bids_file(RESULT_PATH, stage=stage, subj=subj, task=task, run=run, measure=freq_name)
                 epochs_hilb.save(psd_path, overwrite=True)
-                
-                # Create Evokeds per run
-                list_evo_run.append(epochs_hilb['LaughReal'].average())
                 
                 # TODO: Drop bad epochs
                 tfr_data = epochs_hilb.get_data()
                 tfr_data = tfr_data * tfr_data.conj()  # compute power
                 tfr_data = np.mean(tfr_data, axis=0)  # average over epochs
                 
-                # TODO : save epochs_psds in pickle file
-                epochs_psds.append(epochs_hilb.get_data())
-            
-            # Combine evokeds per subj
-            evoked_run = mne.combine_evoked(list_evo_run, weights='nave')
-            list_evo_subj.append(evoked_run)
-            
-            epochs_psds = np.array(epochs_psds)
-            epochs_psds = np.mean(epochs_psds, axis=3).transpose(1, 2, 0)
-            print(epochs_psds.shape)
-            
-            # Compute power across all freq
-            #power = AverageTFR(epochs_hilb.info, epochs_psds, epochs_hilb.times, FREQS_LIST, nave=len(epochs_hilb))  
-            #power_list.append(power) # do it for each subj and each run
-
-        # Average evoked across subj
-        evoked_subj = mne.combine_evoked(list_evo_subj, weights='equal')
         idx += 1
 
     return epochs_hilb
@@ -142,6 +117,16 @@ def compute_morlet_psd(SUBJ_CLEAN, task, event_id) :
         power = tfr_morlet(evokeds, freqs=freqs, n_cycles=n_cycles, use_fft=True,
                                 return_itc=False, decim=3, n_jobs=None)
         
+        # Save power 
+        stage = 'psd'
+        _, psd_path = get_bids_file(RESULT_PATH, 
+                                    stage=stage, 
+                                    subj=subj, 
+                                    task=task, 
+                                    condition = condition, 
+                                    measure='morlet')
+        power.save(psd_path, overwrite=True)
+
         # Plot topomaps
         fig_path = FIG_PATH + 'psd/subj-all_task-{}_cond-{}_meas-morletPSD_topomap'.format(task, condition)
         title_fig = 'Topomaps Morlet wavelet - condition {} - task {}'.format(condition, task)
