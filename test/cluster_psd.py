@@ -33,7 +33,7 @@ with open(path+epo_name1, "rb") as f:
 epochs_cond1.pick_types(meg=True, ref_meg = False,  exclude='bads')
 
 print('--> Read epochs condition 2')
-epo_name2, _ = get_bids_file(PREPROC_PATH, stage='erp', task=task, subj=subj, condition=cond2)
+epo_name2, _ = get_bids_file(PREPROC_PATH, stage='erp', task=task, condition=cond2)
 
 with open(path+epo_name2, "rb") as f:
     epochs_cond2 = pickle.load(f)
