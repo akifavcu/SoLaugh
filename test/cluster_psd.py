@@ -43,10 +43,9 @@ args = parser.parse_args()
 
 if __name__ == "__main__" :
 
-    all_evokeds_list = []
-    cond1 = 'LaughReal'
-    cond2 = 'LaughPosed'
-    task = 'LaughterActive'
+    cond1 = args.condition1
+    cond2 = args.condition2
+    task = args.task
 
     condition = [cond1, cond2] # assert 2 conditions
 
