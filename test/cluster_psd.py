@@ -8,70 +8,112 @@ import matplotlib.pyplot as plt
 import sklearn
 from src.utils import get_bids_file, compute_ch_adjacency
 from src.params import PREPROC_PATH, FREQS_LIST, FREQS_NAMES, EVENTS_ID, RESULT_PATH, SUBJ_CLEAN, FIG_PATH
+from src.params import ACTIVE_RUN, PASSIVE_RUN
 from mne.time_frequency import (tfr_morlet, AverageTFR)
 from mne.stats import spatio_temporal_cluster_test, spatio_temporal_cluster_1samp_test
 from mne.stats import permutation_cluster_1samp_test,  permutation_cluster_test
 
-all_evokeds_list = []
-cond1 = 'LaughReal'
-cond2 = 'LaughPosed'
-task = 'LaughterActive'
 
-contrasts_all_subject = []
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-task",
+    "--task",
+    default="LaughterActive",
+    type=str,
+    help="Task to process",
+)
 
+parser.add_argument(
+    "-cond1",
+    "--condition1",
+    default="LaughReal",
+    type=str,
+    help="First condition",
+)
 
-print("--> Process task :", task)
+parser.add_argument(
+    "-cond2",
+    "--condition2",
+    default="LaughPosed",
+    type=str,
+    help="Second condition",
+)
 
-path = '/home/claraelk/scratch/laughter_data/results/meg/reports/sub-all/erp/'
+args = parser.parse_args()
 
-print('--> Read epochs condition 1')
-epo_name1, _ = get_bids_file(PREPROC_PATH, stage='erp', task=task, condition=cond1)
+if __name__ == "__main__" :
 
-with open(path+epo_name1, "rb") as f:
-    epochs_cond1 = pickle.load(f)
+    all_evokeds_list = []
+    cond1 = 'LaughReal'
+    cond2 = 'LaughPosed'
+    task = 'LaughterActive'
 
-epochs_cond1.pick_types(meg=True, ref_meg = False,  exclude='bads')
+    condition = [cond1, cond2] # assert 2 conditions
 
-print('--> Read epochs condition 2')
-epo_name2, _ = get_bids_file(PREPROC_PATH, stage='erp', task=task, condition=cond2)
+    for i, cond in enumerate(condition) :
+        print('condition -->', cond)
+        list_all_data = []
 
-with open(path+epo_name2, "rb") as f:
-    epochs_cond2 = pickle.load(f)
+        for FREQ, fname in enumerate(FREQS_NAMES) : 
+            print('freq -->', fname)
+            list_epochs_ave = []
 
-epochs_cond2.pick_types(meg=True, ref_meg = False,  exclude='bads')
+            for subj in SUBJ_CLEAN:
+                print("processing subject -->", subj)
+                list_epochs = []
+                epochs_time = []
 
-# Compute freqs from 2 - 60 Hz
-print('--> Start TFR morlet')
-freqs = np.logspace(*np.log10([2, 60]))
-n_cycles = freqs / 2.  # different number of cycle per frequency
-power_cond1 = tfr_morlet(epochs_cond1, freqs=freqs, n_cycles=n_cycles, use_fft=False,
-                        return_itc=False, decim=3, n_jobs=None, average=False)
+                for run in ACTIVE_RUN:
+                    print("processing run -->", run)
 
-power_cond2 = tfr_morlet(epochs_cond2, freqs=freqs, n_cycles=n_cycles, use_fft=False,
-                        return_itc=False, decim=3, n_jobs=None, average=False)
+                    _, psd_path = get_bids_file(RESULT_PATH, 
+                                                stage=stage, 
+                                                subj=subj, 
+                                                task=task, 
+                                                run=run, 
+                                                measure=fname)
+                    epochs = mne.read_epochs(psd_path, verbose=None)
 
-print('--> TFR morlet Done')
+                    # Appliquer la correction baseline
+                    epochs = epochs.apply_baseline(baseline=(None, 0))
+                    list_epochs.append(epochs[cond])
 
-power_cond1.apply_baseline(mode='ratio', baseline=(None, 0))
-power_cond2.apply_baseline(mode='ratio', baseline=(None, 0))
+                # Need to equalize event count
+                mne.epochs.equalize_epoch_counts(list_epochs)
 
-epochs_power_1 = power_cond1.data[:, 0, :, :]  
-epochs_power_2 = power_cond2.data[:, 0, :, :]
+                for epo in list_epochs : # Use epochs with equal n_events
 
-degrees_of_freedom = len(epochs_power_1) - 1
-t_thresh = scipy.stats.t.ppf(1 - 0.001 / 2, df=degrees_of_freedom)
+                    # Moyenner chaque epoch dans le temps pour chaque condition
+                    epochs_ave_time = np.mean(epo.get_data(), axis = 2) # Shape (n_events, n_channels)
+                    epochs_time.append(epochs_ave_time) # len = n_uns
 
-print('Computing adjacency.')
-adjacency, ch_names = compute_ch_adjacency(all_evokeds.info, ch_type='mag')
-print(adjacency.shape)
+                epochs_ave_runs = np.mean(np.array(epochs_time), axis = 0) # Average across runs
+                epochs_ave_event = np.mean(epochs_ave_runs, axis = 0) # Average across epochs
+                list_epochs_ave.append(epochs_ave_event) # Shape (n_chan)
 
-threshold = 6.0
-F_obs, clusters, cluster_p_values, H0 = \
-    permutation_cluster_test([epochs_power_1, epochs_power_2], out_type='indices',
-                             n_permutations=100, threshold=threshold, tail=0)
+            # Concat subjects
+            data_subj = np.array(list_epochs_ave)  # Shape (n_subj, n_chan)
+            list_all_data.append(data_subj) 
 
+        # Concat freqs fon each cond
+        if i == 0 : 
+            all_data_cond1 = np.array(list_all_data)
+            all_data_cond1 = np.transpose(all_data_cond1, [1, 0, 2])
+        elif i == 1 : 
+            all_data_cond2 = np.array(list_all_data)
+            all_data_cond2 = np.transpose(all_data_cond2, [1, 0, 2])
 
-T_obs, clusters, cluster_p_values, H0 = cluster_stats
+    print('all data condition 1 :', all_data_cond1.shape)  # Shape (n_subj, n_chan, n_freq)
+    print('all data condition 2 :', all_data_cond2.shape)  # Shape (n_subj, n_chan, n_freq)
 
-good_cluster_inds = np.where(cluster_p_values < 0.01)[0]
-print("Good clusters: %s" % good_cluster_inds)
+    print('Computing adjacency.')
+    adjacency, ch_names = compute_ch_adjacency(epochs.info, ch_type='mag')
+    print(adjacency.shape)
+
+    threshold = 6.0
+    F_obs, clusters, cluster_p_values, H0 = \
+        permutation_cluster_test([all_data_cond1, all_data_cond2], out_type='indices',
+                                n_permutations=1024, threshold=threshold, tail=0)
+
+    good_cluster_inds = np.where(cluster_p_values < 0.05)[0]
+    print("Good clusters: %s" % good_cluster_inds)
