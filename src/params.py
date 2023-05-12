@@ -16,6 +16,7 @@ SUBJ_LIST.remove('17') #S17 did not finish the task
 SUBJ_LIST.remove('26')
 SUBJ_LIST.remove('27')
 SUBJ_LIST.remove('29')
+SUBJ_LIST.remove('31')
 SUBJ_CLEAN = SUBJ_LIST
 
 RUN_LIST = [str(i).zfill(2) for i in range(1, 13)]
