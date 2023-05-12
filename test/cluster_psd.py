@@ -46,6 +46,7 @@ if __name__ == "__main__" :
     cond1 = args.condition1
     cond2 = args.condition2
     task = args.task
+    stage = 'psd'
 
     condition = [cond1, cond2] # assert 2 conditions
 
