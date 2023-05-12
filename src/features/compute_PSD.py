@@ -68,6 +68,13 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
                 raw_hilbert = raw_filter.apply_hilbert(envelope=True)
 
                 picks = mne.pick_types(raw.info, meg=True, ref_meg=False, eeg=False, eog=False)
+                
+                if run == '02' or run == '03' : 
+                    event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'EnvReal' : 21, 
+                        'EnvPosed' : 22}
+                elif run == '04' or run == '05' :
+                    event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'ScraReal' : 31, 
+                        'ScraPosed' : 32}
 
                 # Segmentation
                 events = mne.find_events(raw)
