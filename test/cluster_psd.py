@@ -42,8 +42,8 @@ parser.add_argument(
 parser.add_argument(
     "-freq",
     "--freqs",
-    default=FREQS_NAMES,
-    type=list,
+    default='alpha',
+    type=str,
     help="Freqs to compute",
 )
 
@@ -55,7 +55,7 @@ if __name__ == "__main__" :
     cond2 = args.condition2
     task = args.task
     stage = 'psd'
-    freq_names = args.freqs
+    freq_names = [args.freqs]
 
     condition = [cond1, cond2] # assert 2 conditions
 
