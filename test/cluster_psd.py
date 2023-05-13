@@ -107,10 +107,10 @@ if __name__ == "__main__" :
         # Concat freqs fon each cond
         if i == 0 : 
             all_data_cond1 = np.array(list_all_data)
-            all_data_cond1 = np.transpose(all_data_cond1, [1, 0, 2])
+            all_data_cond1 = np.transpose(all_data_cond1, [1, 2, 0])
         elif i == 1 : 
             all_data_cond2 = np.array(list_all_data)
-            all_data_cond2 = np.transpose(all_data_cond2, [1, 0, 2])
+            all_data_cond2 = np.transpose(all_data_cond2, [1, 2, 0])
 
     print('all data condition 1 :', all_data_cond1.shape)  # Shape (n_subj, n_chan, n_freq)
     print('all data condition 2 :', all_data_cond2.shape)  # Shape (n_subj, n_chan, n_freq)
