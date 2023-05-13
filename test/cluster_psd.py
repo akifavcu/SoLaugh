@@ -39,6 +39,14 @@ parser.add_argument(
     help="Second condition",
 )
 
+parser.add_argument(
+    "-freq",
+    "--freqs",
+    default=FREQS_NAMES,
+    type=list,
+    help="Freqs to compute",
+)
+
 args = parser.parse_args()
 
 if __name__ == "__main__" :
@@ -47,6 +55,7 @@ if __name__ == "__main__" :
     cond2 = args.condition2
     task = args.task
     stage = 'psd'
+    freq_names = args.freq
 
     condition = [cond1, cond2] # assert 2 conditions
 
@@ -54,7 +63,7 @@ if __name__ == "__main__" :
         print('condition -->', cond)
         list_all_data = []
 
-        for FREQ, fname in enumerate(FREQS_NAMES) : 
+        for FREQ, fname in enumerate(freq_names) : 
             print('freq -->', fname)
             list_epochs_ave = []
 
