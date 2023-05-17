@@ -63,7 +63,7 @@ def induced_cluster(task, stage, cond1, cond2, freq_name) :
 
     for FREQ, fname in enumerate(freq_name) : 
         
-        for i, cond in enumerate(condition) :
+        for i, cond in enumerate(conditions) :
             print('condition -->', cond)
             list_all_data = []
             list_epochs_ave = []
