@@ -60,9 +60,10 @@ args = parser.parse_args()
 def induced_cluster(task, stage, cond1, cond2, freq_name) :
 
     conditions = [cond1, cond2] # assert 2 conditions
+    print(freq_name)
 
     for FREQ, fname in enumerate(freq_name) : 
-        
+
         for i, cond in enumerate(conditions) :
             print('condition -->', cond)
             list_all_data = []
@@ -151,7 +152,7 @@ def induced_cluster(task, stage, cond1, cond2, freq_name) :
         print("Good clusters: %s" % good_cluster_inds)
 
         ########## PLOT ########
-        plot_psd_cluster(cluster_stats, task, cond1, cond2, freq_name)
+        plot_psd_cluster(cluster_stats, good_cluster_inds, task, cond1, cond2, freq_name)
 
 
 def evoked_cluster(task, stage, cond1, cond2, freq_name) : 
@@ -240,11 +241,11 @@ def evoked_cluster(task, stage, cond1, cond2, freq_name) :
 
     ######## PLOT ########
 
-    plot_psd_cluster(cluster_stats, task, cond1, cond2, freq_name)
+    plot_psd_cluster(cluster_stats, good_cluster_inds, task, cond1, cond2, freq_name)
 
     return cluster_stats
 
-def plot_psd_cluster(cluster_stats, task, cond1, cond2, freq_name) : 
+def plot_psd_cluster(cluster_stats, good_cluster_inds, task, cond1, cond2, freq_name) : 
 
     ######## PLOT CLUSTER  ########
 
