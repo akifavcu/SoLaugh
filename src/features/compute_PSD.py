@@ -69,12 +69,16 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
 
                 picks = mne.pick_types(raw.info, meg=True, ref_meg=False, eeg=False, eog=False)
                 
+                # TODO : Rename event
                 if run == '02' or run == '03' : 
-                    event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'EnvReal' : 21, 
-                        'EnvPosed' : 22}
+                    event_id = {'Laugh/Real' : 11, 'Laugh/Posed' : 12, 'Env/Real' : 21, 
+                        'Env/Posed' : 22}
                 elif run == '04' or run == '05' :
-                    event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'ScraReal' : 31, 
-                        'ScraPosed' : 32}
+                    event_id = {'Laugh/Real' : 11, 'Laugh/Posed' : 12, 'Scra/Real' : 31, 
+                        'Scra/Posed' : 32}
+                else : 
+                    event_id = {'Laugh/Real' : 11, 'Laugh/Posed' : 12, 'Press/Good' : 99, 
+                        'Press/Miss' : 66}
 
                 # Segmentation
                 events = mne.find_events(raw)
