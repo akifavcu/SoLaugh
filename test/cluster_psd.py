@@ -303,7 +303,7 @@ if __name__ == "__main__" :
     freq_names = [args.freqs]
 
     if cluster_type == 'evoked' :
-        cluster_stats = evoked_cluster(task, stage, cond1, cond2, freq_name)
+        cluster_stats = evoked_cluster(task, stage, cond1, cond2, freq_names)
 
     elif cluster_type == 'induced' :
-        cluster_stats = induced_cluster(task, stage, cond1, cond2, freq_name)   
+        cluster_stats = induced_cluster(task, stage, cond1, cond2, freq_names)   
