@@ -152,7 +152,7 @@ def induced_cluster(task, stage, cond1, cond2, freq_name) :
         print("Good clusters: %s" % good_cluster_inds)
 
         ########## PLOT ########
-        plot_psd_cluster(cluster_stats, good_cluster_inds, task, cond1, cond2, freq_name)
+        plot_psd_cluster(cluster_stats, good_cluster_inds, task, cond1, cond2, fname)
 
 
 def evoked_cluster(task, stage, cond1, cond2, freq_name) : 
@@ -249,12 +249,12 @@ def plot_psd_cluster(cluster_stats, good_cluster_inds, task, cond1, cond2, freq_
 
     ######## PLOT CLUSTER  ########
 
-    conditions = cond1 + '_' + cond2
+    condition_name = cond1 + '_' + cond2
     F_obs, clusters, cluster_p_values, H0 = cluster_stats
 
     for i_clu, clu_idx in enumerate(good_cluster_inds):
 
-        path = 'psd/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_freq{}{}.png'.format(task, conditions, freq_name, i_clu)
+        path = 'psd/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_freq-{}{}.png'.format(task, condition_name, fname, i_clu)
 
         # unpack cluster information, get unique indices
         time_inds, space_inds = np.squeeze(clusters[clu_idx])
@@ -302,6 +302,8 @@ if __name__ == "__main__" :
     cluster_type = args.cluster_type
     stage = 'psd'
     freq_names = [args.freqs]
+
+    print(task)
 
     if cluster_type == 'evoked' :
         cluster_stats = evoked_cluster(task, stage, cond1, cond2, freq_names)
