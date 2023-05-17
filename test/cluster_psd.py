@@ -47,6 +47,14 @@ parser.add_argument(
     help="Freqs to compute",
 )
 
+parser.add_argument(
+    "-type",
+    "--cluster_type",
+    default='induced',
+    type=str,
+    help="Way to compute cluster",
+)
+
 args = parser.parse_args()
 
 def induced_cluster(task, stage, cond1, cond2, freq_name) :
@@ -290,6 +298,7 @@ if __name__ == "__main__" :
     cond1 = args.condition1
     cond2 = args.condition2
     task = args.task
+    cluster_type = args.cluster_type
     stage = 'psd'
     freq_names = [args.freqs]
 
