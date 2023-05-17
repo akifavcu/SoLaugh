@@ -26,7 +26,7 @@ parser.add_argument(
 parser.add_argument(
     "-cond1",
     "--condition1",
-    default="LaughReal",
+    default="Laugh/Real",
     type=str,
     help="First condition",
 )
@@ -34,7 +34,7 @@ parser.add_argument(
 parser.add_argument(
     "-cond2",
     "--condition2",
-    default="LaughPosed",
+    default="Laugh/Posed",
     type=str,
     help="Second condition",
 )
@@ -53,15 +53,13 @@ def induced_cluster(task, stage, cond1, cond2, freq_name) :
 
     conditions = [cond1, cond2] # assert 2 conditions
 
-    for i, cond in enumerate(condition) :
-        print('condition -->', cond)
-        list_all_data = []
-
-        for FREQ, fname in enumerate(freq_name) : 
+    for FREQ, fname in enumerate(freq_name) : 
+        
+        for i, cond in enumerate(condition) :
+            print('condition -->', cond)
+            list_all_data = []
             list_epochs_ave = []
-            evoked_condition1 = []
-            evoked_condition2 = []
-            
+
             for subj in SUBJ_CLEAN :
                 print("processing subject -->", subj)
                 list_epochs = []
@@ -93,58 +91,60 @@ def induced_cluster(task, stage, cond1, cond2, freq_name) :
 
                 epochs_ave_runs = np.mean(np.array(epochs_time), axis = 0) # Average across runs
                 epochs_ave_event = np.mean(epochs_ave_runs, axis = 0) # Average across epochs
+                print(epochs_ave_event.shape)
                 list_epochs_ave.append(epochs_ave_event) # Shape (n_chan)
 
             # Concat subjects
             data_subj = np.array(list_epochs_ave)  # Shape (n_subj, n_chan)
+            print(data_subj.shape)
             list_all_data.append(data_subj) # Append per freqs
 
-        # Concat freqs fon each cond
-        if i == 0 : 
-            #all_data_cond1 = np.array(list_all_data)
-            #all_data_cond1 = np.transpose(all_data_cond1, [1, 0, 2])
-            all_data_cond1 = data_subj
-        elif i == 1 : 
-            #all_data_cond2 = np.array(list_all_data)
-            #all_data_cond2 = np.transpose(all_data_cond2, [1, 0, 2])
-            all_data_cond2 = data_subj
-            
-    print('all data condition 1 :', all_data_cond1.shape)  # Shape (n_subj, n_freq, n_chan)
-    print('all data condition 2 :', all_data_cond2.shape)  # Shape (n_subj, n_freq, n_chan) 
+            # Concat freqs of each cond
+            if i == 0 : 
+                all_data_cond1 = np.array(list_all_data)
+                all_data_cond1 = np.transpose(all_data_cond1, [1, 0, 2])
+                #all_data_cond1 = data_subj
+            elif i == 1 : 
+                all_data_cond2 = np.array(list_all_data)
+                all_data_cond2 = np.transpose(all_data_cond2, [1, 0, 2])
+                #all_data_cond2 = data_subj
 
-    # difference entre les 2 conditions pur chaque sujet
-    data_contrast = np.subtract(all_data_cond1, all_data_cond2)
-    print(data_contrast.shape) # Shape (n_subj, n_chan)
+        print('all data condition 1 :', all_data_cond1.shape)  # Shape (n_subj, n_freq, n_chan)
+        print('all data condition 2 :', all_data_cond2.shape)  # Shape (n_subj, n_freq, n_chan) 
 
-    # Application de cluster permutation
+        # difference entre les 2 conditions pur chaque sujet
+        data_contrast = np.subtract(all_data_cond1, all_data_cond2)
+        print(data_contrast.shape) # Shape (n_subj, n_chan)
 
-    # TODO : check adjacency
-    print('Computing adjacency.')
-    adjacency, ch_names = compute_ch_adjacency(epochs.info, ch_type='mag')
-    print(adjacency.shape)
+        # Application de cluster permutation
 
-    pval = 0.01  # arbitrary
-    dfn = len([all_data_cond1, all_data_cond2]) - 1  # degrees of freedom numerator
-    dfd = len(all_data_cond1) - len([all_data_cond1, all_data_cond2])  # degrees of freedom denominator
-    thresh = scipy.stats.f.ppf(1 - pval, dfn=dfn, dfd=dfd)  # F distribution
+        # TODO : check adjacency
+        print('Computing adjacency.')
+        adjacency, ch_names = compute_ch_adjacency(epochs.info, ch_type='mag')
+        print(adjacency.shape)
 
-    cluster_stats = \
-        permutation_cluster_1samp_test(data_contrast, 
-                                adjacency = adjacency, 
-                                out_type='indices',
-                                n_permutations=1024, 
-                                threshold=None, 
-                                tail=0,
-                                step_down_p=0.05)
+        pval = 0.01  # arbitrary
+        dfn = len([all_data_cond1, all_data_cond2]) - 1  # degrees of freedom numerator
+        dfd = len(all_data_cond1) - len([all_data_cond1, all_data_cond2])  # degrees of freedom denominator
+        thresh = scipy.stats.f.ppf(1 - pval, dfn=dfn, dfd=dfd)  # F distribution
 
-    F_obs, clusters, cluster_p_values, H0 = cluster_stats
+        cluster_stats = \
+            permutation_cluster_1samp_test(data_contrast, 
+                                    adjacency = adjacency, 
+                                    out_type='indices',
+                                    n_permutations=1024, 
+                                    threshold=None, 
+                                    tail=0,
+                                    step_down_p=0.05)
 
-    good_cluster_inds = np.where(cluster_p_values < 0.05)[0]
-    print("Good clusters: %s" % good_cluster_inds)
+        F_obs, clusters, cluster_p_values, H0 = cluster_stats
 
-    ########## PLOT ########
-    
-    return cluster_stats
+        good_cluster_inds = np.where(cluster_p_values < 0.05)[0]
+        print("Good clusters: %s" % good_cluster_inds)
+
+        ########## PLOT ########
+        plot_psd_cluster(cluster_stats, task, cond1, cond2, freq_name)
+
 
 def evoked_cluster(task, stage, cond1, cond2, freq_name) : 
 
@@ -204,13 +204,11 @@ def evoked_cluster(task, stage, cond1, cond2, freq_name) :
         
         all_contrast = mne.combine_evoked(evoked_subj, 'equal') # Average across subject
         freq_all[fname] = all_contrast
-        
-    all_data = np.array(list_all_data)
-    all_data = np.transpose(all_data, [1, 0, 2])
-    print(all_data.shape)
 
-    path = 'psd/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_erp{}.png'.format(task, conditions, i_clu)
-    
+        all_data = np.array(list_all_data)
+        all_data = np.transpose(all_data, [1, 0, 2])
+        print(all_data.shape)
+
     ######## CLUSTERING #########
 
     # TODO : check adjacency
@@ -234,7 +232,21 @@ def evoked_cluster(task, stage, cond1, cond2, freq_name) :
 
     ######## PLOT ########
 
+    plot_psd_cluster(cluster_stats, task, cond1, cond2, freq_name)
+
+    return cluster_stats
+
+def plot_psd_cluster(cluster_stats, task, cond1, cond2, freq_name) : 
+
+    ######## PLOT CLUSTER  ########
+
+    conditions = cond1 + '_' + cond2
+    F_obs, clusters, cluster_p_values, H0 = cluster_stats
+
     for i_clu, clu_idx in enumerate(good_cluster_inds):
+
+        path = 'psd/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_freq{}{}.png'.format(task, conditions, freq_name, i_clu)
+
         # unpack cluster information, get unique indices
         time_inds, space_inds = np.squeeze(clusters[clu_idx])
         ch_inds = np.unique(space_inds)
@@ -273,8 +285,6 @@ def evoked_cluster(task, stage, cond1, cond2, freq_name) :
         plt.savefig(FIG_PATH + path)
         plt.show()
 
-    return cluster_stats
-
 if __name__ == "__main__" :
 
     cond1 = args.condition1
@@ -283,7 +293,8 @@ if __name__ == "__main__" :
     stage = 'psd'
     freq_names = [args.freqs]
 
-    cluster_stats = evoked_cluster(task, stage, cond1, cond2, freq_name)
+    if cluster_type == 'evoked' :
+        cluster_stats = evoked_cluster(task, stage, cond1, cond2, freq_name)
 
-    cluster_stats = induced_cluster(task, stage, cond1, cond2, freq_name)   
-
+    elif cluster_type == 'induced' :
+        cluster_stats = induced_cluster(task, stage, cond1, cond2, freq_name)   
