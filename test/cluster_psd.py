@@ -63,6 +63,11 @@ def induced_cluster(stage, cond1, cond2, freq_name, task) :
     print(freq_name)
     print(task)
 
+    if task == 'LaughterActive' : 
+        run_list = ACTIVE_RUN
+    elif task == 'LaughterPassive' :
+        run_list = PASSIVE_RUN
+
     for FREQ, fname in enumerate(freq_name) : 
 
         for i, cond in enumerate(conditions) :
@@ -75,7 +80,7 @@ def induced_cluster(stage, cond1, cond2, freq_name, task) :
                 list_epochs = []
                 epochs_time = []
 
-                for run in ACTIVE_RUN :
+                for run in run_list :
                     print("processing run -->", run)
 
                     _, psd_path = get_bids_file(RESULT_PATH, 
@@ -160,6 +165,11 @@ def evoked_cluster(stage, cond1, cond2, freq_name, task) :
 
     conditions = [cond1, cond2] # assert 2 conditions
     freq_all = {}
+    
+    if task == 'LaughterActive' : 
+        run_list = ACTIVE_RUN
+    elif task == 'LaughterPassive' :
+        run_list = PASSIVE_RUN
 
     ######### PREPARE DATA #########
 
