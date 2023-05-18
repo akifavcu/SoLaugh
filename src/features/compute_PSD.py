@@ -56,14 +56,14 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
                 # Take raw data filtered : i.e. NO ICA 
                 _, raw_path = get_bids_file(PREPROC_PATH, stage='proc-filt_raw', task=task, run=run, subj=subj)
                 raw = mne.io.read_raw_fif(raw_path, preload=True)
-                raw = ica.apply(raw)
+                raw_filter = raw.copy()
+                raw_filter = ica.apply(raw)
 
                 epochs_psds = []
 
                 freq_name = FREQS_NAMES[idx]
 
-                info = raw.info
-                raw_filter = raw.copy()
+                info = raw_filter.info
                 raw_filter.filter(l_freq, h_freq)
                 raw_hilbert = raw_filter.apply_hilbert(envelope=True)
 
