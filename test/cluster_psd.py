@@ -66,7 +66,11 @@ def induced_cluster(stage, cond1, cond2, freq_name, task) :
     if task == 'LaughterActive' : 
         run_list = ACTIVE_RUN
     elif task == 'LaughterPassive' :
-        run_list = PASSIVE_RUN
+        if 'Env' in cond1 or 'Env' in cond2 : 
+            run_list = ['02', '03']
+        elif 'Scra' in cond1 or 'Scra' in cond2 :
+            run_list = ['04', '05']
+
 
     for FREQ, fname in enumerate(freq_name) : 
 
@@ -169,7 +173,10 @@ def evoked_cluster(stage, cond1, cond2, freq_name, task) :
     if task == 'LaughterActive' : 
         run_list = ACTIVE_RUN
     elif task == 'LaughterPassive' :
-        run_list = PASSIVE_RUN
+        if 'Env' in cond1 or 'Env' in cond2 : 
+            run_list = ['02', '03']
+        elif 'Scra' in cond1 or 'Scra' in cond2 :
+            run_list = ['04', '05']
 
     ######### PREPARE DATA #########
 
