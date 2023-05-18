@@ -57,10 +57,11 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def induced_cluster(task, stage, cond1, cond2, freq_name) :
+def induced_cluster(stage, cond1, cond2, freq_name, task) :
 
     conditions = [cond1, cond2] # assert 2 conditions
     print(freq_name)
+    print(task)
 
     for FREQ, fname in enumerate(freq_name) : 
 
@@ -155,7 +156,7 @@ def induced_cluster(task, stage, cond1, cond2, freq_name) :
         plot_psd_cluster(cluster_stats, good_cluster_inds, task, cond1, cond2, fname)
 
 
-def evoked_cluster(task, stage, cond1, cond2, freq_name) : 
+def evoked_cluster(stage, cond1, cond2, freq_name, task) : 
 
     conditions = [cond1, cond2] # assert 2 conditions
     freq_all = {}
@@ -306,7 +307,7 @@ if __name__ == "__main__" :
     print(task)
 
     if cluster_type == 'evoked' :
-        cluster_stats = evoked_cluster(task, stage, cond1, cond2, freq_names)
+        cluster_stats = evoked_cluster(stage, cond1, cond2, freq_names, task=task)
 
     elif cluster_type == 'induced' :
-        cluster_stats = induced_cluster(task, stage, cond1, cond2, freq_names)   
+        cluster_stats = induced_cluster(stage, cond1, cond2, freq_names, task=task)   
