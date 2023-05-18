@@ -186,7 +186,7 @@ def evoked_cluster(stage, cond1, cond2, freq_name, task) :
         evoked_condition1 = []
         evoked_condition2 = []
         evoked_subj = []
-        
+        slurm-16986978.out
         for subj in SUBJ_CLEAN :
             print("processing subject -->", subj)
             list_epochs = []
@@ -272,7 +272,7 @@ def plot_psd_cluster(cluster_stats, good_cluster_inds, task, cond1, cond2, freq_
 
     for i_clu, clu_idx in enumerate(good_cluster_inds):
 
-        path = 'psd/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_freq-{}{}.png'.format(task, condition_name, fname, i_clu)
+        path = 'psd/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_freq-{}{}.png'.format(task, condition_name, freq_name, i_clu)
 
         # unpack cluster information, get unique indices
         time_inds, space_inds = np.squeeze(clusters[clu_idx])
