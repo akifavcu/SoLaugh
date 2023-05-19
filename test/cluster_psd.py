@@ -186,7 +186,7 @@ def evoked_cluster(stage, cond1, cond2, freq_name, task) :
         evoked_condition1 = []
         evoked_condition2 = []
         evoked_subj = []
-        slurm-16986978.out
+
         for subj in SUBJ_CLEAN :
             print("processing subject -->", subj)
             list_epochs = []
