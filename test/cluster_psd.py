@@ -70,6 +70,8 @@ def induced_cluster(stage, cond1, cond2, freq_name, task) :
             run_list = ['02', '03']
         elif 'Scra' in cond1 or 'Scra' in cond2 :
             run_list = ['04', '05']
+        elif 'Laugh' in cond1 or 'Laugh' in cond2 :
+            run_list = PASSIVE_RUN
 
 
     for FREQ, fname in enumerate(freq_name) : 
@@ -177,6 +179,8 @@ def evoked_cluster(stage, cond1, cond2, freq_name, task) :
             run_list = ['02', '03']
         elif 'Scra' in cond1 or 'Scra' in cond2 :
             run_list = ['04', '05']
+        elif 'Laugh' in cond1 or 'Laugh' in cond2 :
+            run_list = PASSIVE_RUN
 
     ######### PREPARE DATA #########
 
@@ -193,7 +197,7 @@ def evoked_cluster(stage, cond1, cond2, freq_name, task) :
             evoked_time = []
             contrasts_all_subject = []
 
-            for run in ACTIVE_RUN :
+            for run in run_list :
                 print("processing run -->", run)
 
                 _, psd_path = get_bids_file(RESULT_PATH, 
