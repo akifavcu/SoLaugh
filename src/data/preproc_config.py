@@ -9,6 +9,8 @@ matplotlib.use('agg')
 # Config parameters
 # -----------------
 
+## TODO : NEED TO ADD EMPTY ROOM
+
 interactive = True
 on_error = 'debug'
 
@@ -66,7 +68,6 @@ ica_l_freq = 1.
 ica_n_components = 0.99
 ica_reject_components = 'auto'
 
-
 # Epochs
 epochs_tmin = -0.5
 epochs_tmax = 1.5
@@ -88,7 +89,7 @@ if task == "LaughterActive" :
 
 elif task == "LaughterPassive" :
     
-    conditions = ['EnvReal', 'ScraReal', 'EnvPosed','ScraPosed']
+    conditions = ['LaughReal', 'LaughPosed', 'EnvReal', 'ScraReal', 'EnvPosed','ScraPosed'] 
     event_repeated = 'drop'
     
     # Decoding
@@ -98,6 +99,9 @@ elif task == "LaughterPassive" :
     # Time-frequency analysis 
     # time_frequency_conditions = ['EnvReal', 'ScraReal', 'EnvPosed','ScraPosed']
     decoding_csp = False
+
+elif task == 'RS' : 
+    task_is_rest = True
 
 # Source reconstruction
 run_source_estimation = False
