@@ -1,3 +1,5 @@
+#!/bin/bash
+#SBATCH --job-name=SoLaughArchive
 #SBATCH --account=def-kjerbi
 #SBATCH --time=12:00:00     
 #SBATCH --mem=16  
