@@ -2,7 +2,7 @@
 #SBATCH --job-name=SoLaughArchive
 #SBATCH --account=def-kjerbi
 #SBATCH --time=12:00:00     
-#SBATCH --mem=16  
+#SBATCH --mem=500G  
 #SBATCH --output=S-subtrain-%j.out
 #SBATCH --error=S-subtrain-%j.err
 
