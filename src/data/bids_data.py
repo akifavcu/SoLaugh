@@ -63,7 +63,7 @@ for idx, old_file in enumerate(folder_subj) :
             date_raw = raw.info['meas_date'].strftime('%Y%m%d')
 
             # Add info for noise empty room
-            noise_path = DISK_PATH + 'NOISE_noise_{}_01.ds'.format(date_raw)
+            noise_path = DISK_PATH + 'NOISE1Trial5min_noise_{}_01.ds'.format(date_raw)
             noise_raw_fname = os.path.join(old_path, CAfile)
             noise_raw = mne.io.read_raw_ctf(noise_raw_fname)  
 
