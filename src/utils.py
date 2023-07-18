@@ -48,25 +48,24 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
     # Epochs and PSD files
     # TODO : change epochs =>
     elif ("psd" in stage 
-    or "erp" in stage) :
+    or "epo" in stage) :
 
         folder = 'sub-' + subj
-        if 'erp' in stage : 
-            extension = ".pkl"
-        elif 'psd' in stage :
+        if measure == 'log' :
+            extension -= '.pkl'
+        else :
             extension = '.fif'
-            stage = 'psd_epo'
 
         if condition != None :
             if measure == None :
                 laughter_bidsname = "sub-{}_run-{}_task-{}_{}_cond-{}{}".format(subj, run, task, 
-                                                                                stage, condition, extension)
+                                                                                condition, stage, extension)
 
                 laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
             else :
                 laughter_bidsname = "sub-{}_run-{}_task-{}_{}_cond-{}_meas-{}{}".format(subj, run, 
-                                                                                        task, stage, condition,
-                                                                                        measure, extension)
+                                                                                        task, condition,
+                                                                                        measure, stage, extension)
                 laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
         else :
             if measure == None :
