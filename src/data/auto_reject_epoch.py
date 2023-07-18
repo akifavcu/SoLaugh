@@ -18,11 +18,11 @@ for subj in SUBJ_CLEAN :
     reject = get_rejection_threshold(epochs)  
 
     # Save autoreject epochs
-    _, save_AR_epochs = get_bids_file(RESULT_PATH, stage = "AR", task=task, subj=subj, measure='epo')
+    _, save_AR_epochs = get_bids_file(RESULT_PATH, stage = "AR_epo", task=task, subj=subj)
     epochs_clean.save(save_AR_epochs, overwrite = True) 
 
     # Save dict with rejected epochs info
-    _, save_AR = get_bids_file(RESULT_PATH, stage = "AR", task=task, subj=subj, measure='log')
+    _, save_AR = get_bids_file(RESULT_PATH, stage = "AR_epo", task=task, subj=subj, measure='log')
 
     with open(save_AR, 'wb') as f:
         pickle.dump(reject, f)  
