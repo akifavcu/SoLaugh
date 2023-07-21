@@ -17,71 +17,83 @@ parser.add_argument(
     type=str,
     help="Task to process",
 )
+args = parser.parse_args()
 
-def prepare_psd_data(conditions, SUBJ_CLEAN, task):
+def prepare_psd_data(SUBJ_CLEAN, task, conditions):
     all_subj_psd = []
 
     for i, cond in enumerate(conditions) :
         print('condition -->', cond)
         list_all_data = []
         list_epochs_ave = []
+        all_psd = []
+        freqs_list = []
 
         for subj in SUBJ_CLEAN :
             epochs_time = []
             list_epochs = []
 
             for run in run_list : 
+                # Get path
                 _, psd_path = get_bids_file(PREPROC_PATH, subj=subj, task=task, run=run, stage='proc-clean_epo')
+
+                # Read epochs
                 epochs = mne.read_epochs(psd_path)
                 epochs.pick_types(meg=True, ref_meg=False,  exclude='bads')
                 epochs = epochs.apply_baseline(baseline=(None, 0))
                 
+                # Compute PSD
                 psd = epochs[cond].compute_psd(fmin=2.0, fmax=40.0)
 
+                # Take freqs
                 freqs_subj = psd.freqs
                 freqs_list.append(freqs_subj)
                 
+                # Take data
                 data = psd.get_data()
                 all_psd.append(data)
                 data_ave_epochs = np.mean(data, axis = 0)
 
-                # Average frequency across subjects
-    freqs = np.mean(np.array(freqs_list), axis=0)
-    print(freqs.shape)
+        # Average frequency across subjects
+        freqs = np.mean(np.array(freqs_list), axis=0)
+        print(freqs.shape)
 
-    # Average power across :
-    # runs
-    psd_ave_run = np.mean(np.array(all_psd), axis=0)
-    # epochs
-    psd_ave_epo = np.mean(np.array(psd_ave_run), axis=0)
-    # channels
-    psd = np.mean(np.array(psd_ave_epo), axis=0)
+        # Average power across :
+        # runs
+        psd_ave_run = np.mean(np.array(all_psd), axis=0)
+        # epochs
+        psd_ave_epo = np.mean(np.array(psd_ave_run), axis=0)
+        # channels
+        psd = np.mean(np.array(psd_ave_epo), axis=0)
 
-    print(psd.shape)
+        print(psd.shape)
 
-    _, save_path = get_bids_file(RESULT_PATH, stage='psd', measure = 'log_fooof', task=task, condition=cond)
+        _, save_path = get_bids_file(RESULT_PATH, stage='psd', measure='log_fooof', task=task, condition=cond)
 
-    with open(save_path, 'wb') as f:
-        pickle.dump(psd, f)  
+        with open(save_path, 'wb') as f:
+            pickle.dump(psd, f)  
+        
+        apply_fooof(psd, task=task, condition=cond)
 
-    return all_subj_psd
+    return psd
 
-def apply_fooof(data_psd) :
-    fm = FOOOF()
+def apply_fooof(psd, task, condition) :
 
-    # Set the frequency range to fit the model
-    freq_range = [2, 40]
-
-    # Report: fit the model, print the resulting parameters, and plot the reconstruction
     fooof_path = os.path.join(RESULT_PATH, 'meg', 'reports', 'sub-all')
-    fm.fit(data_psd, data_psd, freq_range)  
 
-    fm.save('fooof_data', fooof_path, save_results=True, save_settings=True, save_data=True)
-    fm.save_report('fooof_report', fooof_path)
+    # Fit model to data
+    fm = FOOOF()
+    fm.fit(freqs, psd, freq_range)  
+
+    # Save data
+    fm.save('subj-all_task-{}_cond-{}_fooof_data'.format(task, condition), 
+            fooof_path, save_results=True, save_settings=True, save_data=True)
+
+    # Save fooof report
+    fm.save_report('subj-all_task-{}_cond-{}_fooof_report'.format(task, condition), fooof_path)
 
 if __name__ == "__main__" :
-    task = 'LaughterActive'
-    conditions = ['LaughReal']
+    task = args.task
 
     if task == 'LaughterActive':
         run_list = ACTIVE_RUN
@@ -91,4 +103,4 @@ if __name__ == "__main__" :
         conditions = ['LaughReal', 'LaughPosed', 'EnvReal', 'EnvPosed'
                       'ScraReal', 'ScraPosed']
 
-    data_psd = prepare_psd_data(conditions, SUBJ_CLEAN, task)
+    psd = prepare_psd_data(SUBJ_CLEAN, task, conditions)

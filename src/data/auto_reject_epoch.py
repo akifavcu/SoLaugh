@@ -51,11 +51,11 @@ for task in task_list :
         print('Autoreject: Done')  
 
         # Save autoreject epochs
-        _, save_AR_epochs = get_bids_file(PREPROC_PATH, stage="AR_epo", task=task, subj=subj)
+        _, save_AR_epochs = get_bids_file(RESULT_PATH, stage="AR_epo", task=task, subj=subj)
         epochs_clean.save(save_AR_epochs, overwrite = True) 
 
         # Save dict with rejected epochs info
-        _, save_AR = get_bids_file(PREPROC_PATH, stage="AR_epo", task=task, subj=subj, measure='log')
+        _, save_AR = get_bids_file(RESULT_PATH, stage="AR_epo", task=task, subj=subj, measure='log')
 
         with open(save_AR, 'wb') as f:
             pickle.dump(reject, f)
