@@ -45,37 +45,37 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
         laughter_bidsname = "sub-{}_ses-recording_task-{}_run-{}_{}{}".format(subj, task, run, stage, extension)
         laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), "ses-recording", "meg", laughter_bidsname)
 
-    # Epochs and PSD files
-    # TODO : change epochs =>
+    # Epochs, ERPs and PSD files
     elif ("psd" in stage 
-    or "epo" in stage) :
+    or "epo" in stage
+    or "erp" in stage) :
 
         folder = 'sub-' + subj
-        if measure == 'log' :
-            extension -= '.pkl'
+        if 'log' in measure:
+            extension = '.pkl'
         else :
             extension = '.fif'
 
         if condition != None :
             if measure == None :
-                laughter_bidsname = "sub-{}_run-{}_task-{}_{}_cond-{}{}".format(subj, run, task, 
+                laughter_bidsname = "sub-{}_task-{}_run-{}_cond-{}_{}{}".format(subj, task, run, 
                                                                                 condition, stage, extension)
 
                 laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
             else :
-                laughter_bidsname = "sub-{}_run-{}_task-{}_{}_cond-{}_meas-{}{}".format(subj, run, 
-                                                                                        task, condition,
+                laughter_bidsname = "sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}{}".format(subj, task, 
+                                                                                        run, condition,
                                                                                         measure, stage, extension)
                 laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
         else :
             if measure == None :
-                laughter_bidsname = "sub-{}_run-{}_task-{}_{}{}".format(subj, run, task, 
+                laughter_bidsname = "sub-{}_task-{}_run-{}_{}{}".format(subj, task, run, 
                                                                         stage, extension)
 
                 laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
             else :
-                laughter_bidsname = "sub-{}_run-{}_task-{}_meas-{}_{}{}".format(subj, run, 
-                                                                                task,
+                laughter_bidsname = "sub-{}_task-{}_run-{}_meas-{}_{}{}".format(subj, task, 
+                                                                                run,
                                                                                 measure, stage, extension)
                 laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
 
