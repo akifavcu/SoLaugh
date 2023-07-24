@@ -51,7 +51,7 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
     or "erp" in stage) :
 
         folder = 'sub-' + subj
-        if 'log' in measure:
+        if measure == 'log' or measure == 'log_fooof':
             extension = '.pkl'
         else :
             extension = '.fif'
