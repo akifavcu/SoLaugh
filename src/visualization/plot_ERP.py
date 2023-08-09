@@ -38,7 +38,9 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
+def plot_gfp(condition1, condition2, cond1, cond2, task, picks) :
+
+    '''TODO : PLOT GFP'''
     
     condition1.pick_types(meg=True, ref_meg = False,  exclude='bads')
     condition2.pick_types(meg=True, ref_meg = False,  exclude='bads')
@@ -70,13 +72,32 @@ def plot_ERP(condition1, condition2, cond1, cond2, task, picks) :
     
 
 
-def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, cond2) :
+def visualize_cluster(contrast, cluster_stats, event_id, task, conditions, cond1, cond2) :
     """
     Code adapted from : 
     https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
     """
 
-    #epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
+    evoked_condition1 = []
+    evoked_condition2 = []
+
+    for subj in SUBJ_CLEAN :
+        print("processing -->", subj)
+        #_, path_evoked = get_bids_file(PREPROC_PATH, task=task, subj=subj, stage="ave")
+        #evoked = mne.read_evokeds(path_evoked, verbose=None)
+        
+        _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
+        epochs_AR = mne.read_epochs(path_epochs, verbose=None)
+        epochs_AR.filter(1, 30)
+        
+        # Drop EEg channels and equalize event number
+        evoked_condition1.append(epochs_AR[cond1].average())
+        evoked_condition2.append(epochs_AR[cond2].average())
+
+    # Prepare data for plotting
+    evokeds = {cond1 : evoked_condition1, cond2 : evoked_condition2}
+
+    #contrast.pick_types(meg=True, ref_meg = False,  exclude='bads')
     T_obs, clusters, p_values, _ = cluster_stats
     
     p_accept = 0.01
@@ -86,10 +107,6 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
     colors = "crimson",'steelblue'
     linestyles = '-', '--'
 
-    # organize data for plotting
-    epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
-    epochs.filter(l_freq=1, h_freq=30)
-    evokeds = {cond: epochs[cond].average() for cond in event_id}
 
     # loop over clusters
     for i_clu, clu_idx in enumerate(good_cluster_inds):
@@ -102,7 +119,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         t_map = T_obs[time_inds, ...].mean(axis=0)
 
         # get signals at the sensors contributing to the cluster
-        sig_times = epochs.times[time_inds]
+        sig_times = contrast.times[time_inds]
 
         # create spatial mask
         mask = np.zeros((t_map.shape[0], 1), dtype=bool)
@@ -112,7 +129,7 @@ def visualize_cluster(epochs, cluster_stats, event_id, task, conditions, cond1, 
         fig, ax_topo = plt.subplots(1, 1, figsize=(10, 3))
 
         # plot average test statistic and mark significant sensors
-        t_evoked = mne.EvokedArray(t_map[:, np.newaxis], epochs.info, tmin=0)
+        t_evoked = mne.EvokedArray(t_map[:, np.newaxis], contrast.info, tmin=0)
         t_evoked.plot_topomap(times=0, mask=mask, axes=ax_topo, cmap='Reds',
                               vlim=(np.min, np.max), show=False,
                               colorbar=False, mask_params=dict(markersize=10))
@@ -173,30 +190,20 @@ if __name__ == "__main__" :
 
     print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
-    # Import ERP files path
-    _, save_erp_cond1 = get_bids_file(RESULT_PATH, task=task, stage="erp", condition=cond1)
-
-    _, save_erp_cond2 = get_bids_file(RESULT_PATH, task=task, stage="erp", condition=cond2)
-
-    _, save_erp_concat = get_bids_file(RESULT_PATH, task=task, stage="erp-concat", condition=conditions)
+    # Import clusters files path
 
     _, save_clusters_stats = get_bids_file(RESULT_PATH, stage="erp-clusters", task=task, measure="Ttest-clusters", condition=conditions)
 
-    # Open pickle files
-    with open(save_erp_cond1, "rb") as f:
-        condition1 = pickle.load(f)
-
-    with open(save_erp_cond2, "rb") as f:
-        condition2 = pickle.load(f)
-
-    with open(save_erp_concat, "rb") as f:
-        epochs_concat = pickle.load(f)
+    _, save_contrast = get_bids_file(RESULT_PATH, stage="erp-contrast", task=task, condition=conditions)
 
     with open(save_clusters_stats, 'rb') as f:
         cluster_stats = pickle.load(f)
 
+    with open(save_contrast, 'rb') as f:
+        contrast = pickle.load(f)
+
     # Plot ERPs
-    #plot_ERP(condition1, condition2, cond1, cond2, task, picks)
+    # plot_gfp(condition1, condition2, cond1, cond2, task, picks)
 
     # Visualization of ERP clusters
-    visualize_cluster(epochs_concat, cluster_stats, event_id, task, conditions, cond1, cond2)
+    visualize_cluster(contrast, cluster_stats, event_id, task, conditions, cond1, cond2)
