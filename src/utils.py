@@ -47,8 +47,9 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
 
     # Epochs, ERPs and PSD files
     elif ("psd" in stage 
-    or "epo" in stage
-    or "erp" in stage) :
+    or "erp" in stage
+    or stage == "AR_epo"
+    or stage == "log_AR_epo"):
 
         folder = 'sub-' + subj
         if measure == 'log' or measure == 'log_fooof':
