@@ -6,7 +6,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from src.utils import get_bids_file, compute_ch_adjacency
-from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_LIST, ACTIVE_RUN, RESULT_PATH, EVENTS_ID
+from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_LIST, ACTIVE_RUN, RESULT_PATH, EVENTS_ID, SUBJ_CLEAN
 from mne.stats import spatio_temporal_cluster_test, combine_adjacency, permutation_cluster_1samp_test
 
 parser = argparse.ArgumentParser()
@@ -36,14 +36,47 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def cluster_ERP(epochs, task, event_id, cond1, cond2) :
+def global_field_power(subj_list, task, event_id, cond1, cond2):
+    
+    data_all_subject = []
+
+    for subj in subj_list :
+        epochs_path = get_bids_file(RESULT_PATH, stage='AR_epochs', subj=subj, task=task)
+        epochs = mne.read_epochs(epochs_path)
+
+        # Drop EEg channels and equalize event number
+        # Equalize event
+        epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
+
+        data_all_subject.append(epochs.get_data())
+
+    # Average across subjects
+    data = np.mean(np.array(data_all_subject), axis=0) 
+
+    # Average across epochs
+
+    # Average across channel
+
+    # Test-t through time (correction permutation)
+
+
+    
+def cluster_ERP(subj_list, task, event_id, cond1, cond2) :
+
+    data_all_subject = []
 
     # Code adapted from :
     # https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
 
-    # Drop EEg channels and equalize event number
-    epochs.equalize_event_counts(event_id)
-    epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
+    for subj in subj_list :
+        epochs_path = get_bids_file(RESULT_PATH, stage='AR_epochs', subj=subj, task=task)
+        epochs = mne.read_epochs(epochs_path)
+
+        # Drop EEg channels and equalize event number
+        epochs.equalize_event_counts(event_id)
+        epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
+
+        data_all_subject.append(epochs.get_data())
 
     # Compute adjacency by using _compute_ch_adjacency function
     # as we got 270 channels and not 275 as the CTF275 provide
@@ -96,13 +129,13 @@ if __name__ == "__main__" :
     
     # Select subjects and runs and stage
     task = args.task
-    subj_list = SUBJ_LIST
+    subj_list = SUBJ_CLEAN
     stage = "epo"
 
     # Select what conditions to compute (str)
     cond1 = args.condition1
     cond2 = args.condition2
-    conditions = conditions = cond1 + '-' + cond2
+    conditions = cond1 + '-' + cond2
     condition_list = [cond1, cond2]
     event_id = dict()
     picks = "meg" # Select MEG channels
@@ -116,10 +149,8 @@ if __name__ == "__main__" :
 
     print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
-    _, save_erp_concat = get_bids_file(RESULT_PATH, task=task, stage="erp-concat", condition=conditions)
-    
-    with open(save_erp_concat, "rb") as f:
-        epochs_concat = pickle.load(f)
+    # Compute GFP
+    global_field_power(subj_list, task, event_id, cond1, cond2)
 
     # Compute ERP clusters
-    F_obs, clusters, p_values = cluster_ERP(epochs_concat, task, event_id, cond1, cond2)
+    # F_obs, clusters, p_values = cluster_ERP(subj_list, task, event_id, cond1, cond2)
