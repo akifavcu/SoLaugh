@@ -40,9 +40,15 @@ def prepare_psd_data(SUBJ_CLEAN, task, conditions):
                 # Read epochs
                 epochs = mne.read_epochs(psd_path)
                 epochs.pick_types(meg=True, ref_meg=False,  exclude='bads')
-                epochs = epochs.apply_baseline(baseline=(None, 0))
                 
+                #epochs = epochs.apply_baseline(baseline=(None, 0))
+                #list_epochs.append(epochs)
+                
+                # equalize events
+                mne.epochs.equalize_epoch_counts(list_epochs)
+
                 # Compute PSD
+                # TODO : apply psd on raw data
                 psd = epochs[cond].compute_psd(fmin=2.0, fmax=40.0)
 
                 # Take freqs
@@ -52,7 +58,6 @@ def prepare_psd_data(SUBJ_CLEAN, task, conditions):
                 # Take data
                 data = psd.get_data()
                 all_psd.append(data)
-                data_ave_epochs = np.mean(data, axis = 0)
 
         # Average frequency across subjects
         freqs = np.mean(np.array(freqs_list), axis=0)
@@ -73,14 +78,15 @@ def prepare_psd_data(SUBJ_CLEAN, task, conditions):
         with open(save_path, 'wb') as f:
             pickle.dump(psd, f)  
         
-        apply_fooof(psd, task=task, condition=cond)
+        apply_fooof(psd, task=task, condition=cond, freqs=freqs)
 
     return psd
 
-def apply_fooof(psd, task, condition) :
+def apply_fooof(psd, task, condition, freqs) :
 
     fooof_path = os.path.join(RESULT_PATH, 'meg', 'reports', 'sub-all')
-
+    freq_range = [2, 40]
+    
     # Fit model to data
     fm = FOOOF()
     fm.fit(freqs, psd, freq_range)  
