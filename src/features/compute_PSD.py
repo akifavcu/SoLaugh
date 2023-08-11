@@ -49,6 +49,10 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
             # Take ica data
             _, ica_path = get_bids_file(PREPROC_PATH, stage='ica', subj=subj)
             ica = mne.preprocessing.read_ica(ica_path)
+
+            _, reject_path = get_bids_file(RESULT_PATH, stage="AR_epo", task=task, subj=subj, measure='log')
+            with open(reject_path, 'rb') as f:
+                reject = pickle.load(f)  
                         
             for run in RUN_LIST :
                 print("=> Process run :", run)
@@ -57,7 +61,7 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
                 _, raw_path = get_bids_file(PREPROC_PATH, stage='proc-filt_raw', task=task, run=run, subj=subj)
                 raw = mne.io.read_raw_fif(raw_path, preload=True)
                 raw_filter = raw.copy()
-                raw_filter = ica.apply(raw)
+                raw_filter = ica.apply(raw_filter)
 
                 epochs_psds = []
 
@@ -69,17 +73,6 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
 
                 picks = mne.pick_types(raw.info, meg=True, ref_meg=False, eeg=False, eog=False)
                 
-                # TODO : Rename event
-                if run == '02' or run == '03' : 
-                    event_id = {'Laugh/Real' : 11, 'Laugh/Posed' : 12, 'Env/Real' : 21, 
-                        'Env/Posed' : 22}
-                elif run == '04' or run == '05' :
-                    event_id = {'Laugh/Real' : 11, 'Laugh/Posed' : 12, 'Scra/Real' : 31, 
-                        'Scra/Posed' : 32}
-                else : 
-                    event_id = {'Laugh/Real' : 11, 'Laugh/Posed' : 12, 'Press/Good' : 99, 
-                        'Press/Miss' : 66}
-
                 # Segmentation
                 events = mne.find_events(raw)
                 epochs_hilb = mne.Epochs(
@@ -89,17 +82,20 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
                     tmin=-0.5,
                     tmax=1.5,
                     baseline=(None, 0),
-                    picks=picks)
-                                
+                    picks=picks)    
+                
+                # Auto-reject epochs
+                epochs_hilb.drop_bad(reject=reject)
+
                 # Save epochs
-                stage = 'psd'
+                stage = 'psd_epo'
                 _, psd_path = get_bids_file(RESULT_PATH, stage=stage, subj=subj, task=task, run=run, measure=freq_name)
                 epochs_hilb.save(psd_path, overwrite=True)
                 
-                # TODO: Drop bad epochs
-                tfr_data = epochs_hilb.get_data()
-                tfr_data = tfr_data * tfr_data.conj()  # compute power
-                tfr_data = np.mean(tfr_data, axis=0)  # average over epochs
+                #tfr_data = epochs_hilb.get_data()
+                #tfr_data = tfr_data * tfr_data.conj()  # compute power
+                #tfr_data = np.mean(tfr_data, axis=0)  # average over epochs
+
                 
         idx += 1
 

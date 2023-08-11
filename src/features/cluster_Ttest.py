@@ -22,7 +22,7 @@ parser.add_argument(
 parser.add_argument(
     "-cond1",
     "--condition1",
-    default="Laugh/Real",
+    default="LaughReal",
     type=str,
     help="First condition",
 )
@@ -30,14 +30,14 @@ parser.add_argument(
 parser.add_argument(
     "-cond2",
     "--condition2",
-    default="Laugh/Posed",
+    default="LaughPosed",
     type=str,
     help="Second condition",
 )
 
 args = parser.parse_args()
 
-def compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
+def compute_cluster_Ttest(SUBJ_CLEAN, task, cond1, cond2) :
     
     contrasts_all_subject = []
     evoked_condition1 = []
@@ -45,8 +45,10 @@ def compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2) :
 
     for subj in SUBJ_CLEAN :
         print("processing -->", subj)
-        _, path_epochs = get_bids_file(PREPROC_PATH, task=task, subj=subj, stage="epo")
+        # TODO : change with AR_epochs
+        _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
         epochs = mne.read_epochs(path_epochs, verbose=None)
+        epochs.equalize_event_counts([cond1, cond2]) 
 
         # Drop EEg channels and equalize event number
         evoked_condition1.append(epochs[cond1].average()) 
@@ -117,17 +119,9 @@ if __name__ == "__main__" :
     cond2 = args.condition2
     conditions = conditions = cond1 + '-' + cond2
     condition_list = [cond1, cond2]
-    event_id = dict()
     picks = "meg" # Select MEG channels
     
-    for ev in EVENTS_ID :
-        for conds in condition_list :
-            if conds not in EVENTS_ID :
-                raise Exception("Condition is not an event")
-            if conds == ev :
-                event_id[conds] = EVENTS_ID[ev]
-
     print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
     # Compute ERP clusters
-    cluster_stats, contrast, evoked_contrast, evoked_condition1, evoked_condition2 = compute_cluster_Ttest(SUBJ_CLEAN, task, event_id, cond1, cond2)
+    cluster_stats, contrast, evoked_contrast, evoked_condition1, evoked_condition2 = compute_cluster_Ttest(SUBJ_CLEAN, task, cond1, cond2)
