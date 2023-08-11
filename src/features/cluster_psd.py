@@ -22,7 +22,34 @@ from mne.stats import (
     summarize_clusters_stc,
 )
 
-def cluster_ttest_psd(freq_name, condition, SUBJ_CLEAN, run_list) : 
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-task",
+    "--task",
+    default="LaughterActive",
+    type=str,
+    help="Task to process",
+)
+
+parser.add_argument(
+    "-cond1",
+    "--condition1",
+    default="LaughReal",
+    type=str,
+    help="First condition",
+)
+
+parser.add_argument(
+    "-cond2",
+    "--condition2",
+    default="LaughPosed",
+    type=str,
+    help="Second condition",
+)
+
+args = parser.parse_args()
+
+def cluster_ttest_psd(freq_name, condition, SUBJ_CLEAN, run_list, stage, task) : 
 
     for FREQ, fname in enumerate(freq_name) : 
 
@@ -142,4 +169,4 @@ if __name__ == "__main__" :
     elif task == 'LaughterPassive' :
         run_list = PASSIVE_RUN
 
-    data_contrast, cluster_stats = cluster_ttest_psd()
+    data_contrast, cluster_stats = cluster_ttest_psd(freq_name, condition, SUBJ_CLEAN, run_list, stage, task)
