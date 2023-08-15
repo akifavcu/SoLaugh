@@ -45,6 +45,12 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
         laughter_bidsname = "sub-{}_ses-recording_task-{}_run-{}_{}{}".format(subj, task, run, stage, extension)
         laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), "ses-recording", "meg", laughter_bidsname)
 
+    elif 'tfr' in stage :
+        extension = '.h5'
+        
+        laughter_bidsname = "sub-{}_ses-recording_task-{}_run-{}_{}{}".format(subj, task, run, stage, extension)
+        laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), "ses-recording", "meg", laughter_bidsname)
+
     # Epochs, ERPs and PSD files
     elif ("psd" in stage 
     or "erp" in stage
