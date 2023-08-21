@@ -35,28 +35,60 @@ parser.add_argument(
     help="Second condition",
 )
 
+parser.add_argument(
+    "-bsl",
+    "--baseline",
+    default=False,
+    type=bool,
+    help="Compute baseline condition",
+)
 args = parser.parse_args()
 
-def compute_cluster_Ttest(SUBJ_CLEAN, task, cond1, cond2) :
+def compute_cluster_Ttest(SUBJ_CLEAN, task, cond1, cond2, bsl) :
     
     contrasts_all_subject = []
     evoked_condition1 = []
     evoked_condition2 = []
 
     for subj in SUBJ_CLEAN :
-        print("processing -->", subj)
-        # TODO : change with AR_epochs
-        _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
-        epochs = mne.read_epochs(path_epochs, verbose=None)
-        epochs.equalize_event_counts([cond1, cond2]) 
 
-        # Drop EEg channels and equalize event number
-        evoked_condition1.append(epochs[cond1].average()) 
-        evoked_condition2.append(epochs[cond2].average())
+        if bsl == False : 
+            print("processing -->", subj)
+            # TODO : change with AR_epochs
+            _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
+            epochs = mne.read_epochs(path_epochs, verbose=None)
+            epochs.equalize_event_counts([cond1, cond2]) 
 
-        contrast = mne.combine_evoked([epochs[cond1].average(), epochs[cond2].average()], weights=[1, -1])
-        contrast.pick_types(meg=True, ref_meg=False,  exclude='bads')
-        contrasts_all_subject.append(contrast)
+            # Drop EEg channels and equalize event number
+            evoked_condition1.append(epochs[cond1].average()) 
+            evoked_condition2.append(epochs[cond2].average())
+
+            contrast = mne.combine_evoked([epochs[cond1].average(), epochs[cond2].average()], weights=[1, -1])
+            contrast.pick_types(meg=True, ref_meg=False,  exclude='bads')
+            contrasts_all_subject.append(contrast)
+
+        elif bsl == True :
+
+            cond2 = 'BaselineZero'
+            conditions = cond1 + '-' + cond2
+            condition_list = [cond1, cond2]
+
+            print("processing -->", subj)
+            # TODO : change with AR_epochs
+            _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
+            epochs = mne.read_epochs(path_epochs, verbose=None)
+            #epochs.equalize_event_counts([cond1, cond2]) 
+            
+            # Take nb channel and time
+            baseline_data = np.zeros((epochs.get_data().shape[1], epochs.get_data().shape[2]))
+
+            # Drop EEg channels and equalize event number
+            evoked_condition1.append(epochs[cond1].average()) 
+            baseline = mne.EvokedArray(baseline_data, epochs.info, tmin=-0.5, comment='baseline')
+
+            contrast = mne.combine_evoked([epochs[cond1].average(), baseline], weights=[1, -1])
+            contrast.pick_types(meg=True, ref_meg=False,  exclude='bads')
+            contrasts_all_subject.append(contrast)
 
     # Combine all subject together
     evoked_contrast = mne.combine_evoked(contrasts_all_subject, 'equal')
@@ -115,6 +147,7 @@ if __name__ == "__main__" :
     stage = "epo"
 
     # Select what conditions to compute (str)
+    bsl = args.baseline
     cond1 = args.condition1
     cond2 = args.condition2
     conditions = conditions = cond1 + '-' + cond2
@@ -124,4 +157,4 @@ if __name__ == "__main__" :
     print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
     # Compute ERP clusters
-    cluster_stats, contrast, evoked_contrast, evoked_condition1, evoked_condition2 = compute_cluster_Ttest(SUBJ_CLEAN, task, cond1, cond2)
+    cluster_stats, contrast, evoked_contrast, evoked_condition1, evoked_condition2 = compute_cluster_Ttest(SUBJ_CLEAN, task, cond1, cond2, bsl)
