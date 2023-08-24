@@ -42,7 +42,7 @@ def grand_ave_erp(task, cond) :
         
     evokeds_all_subj = mne.combine_evoked(evoked_one_condition, 'equal')
 
-    evokeds_all_subj.save(RESULT_PATH + 'meg/reports/sub-all/erp/sub-all_task-{}_run-all_cond-{}_meas-test_grandave-ave.fif'.format(task, cond))
+    evokeds_all_subj.save(RESULT_PATH + 'meg/reports/sub-all/erp/sub-all_task-{}_run-all_cond-{}_meas-grandave-ave.fif'.format(task, cond))
 
     return evokeds_all_subj
 
