@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from src.utils import get_bids_file
-from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_CLEAN, ACTIVE_RUN, RESULT_PATH, EVENTS_ID, FIG_PATH
+from src.params import BIDS_PATH, PREPROC_PATH, SUBJ_CLEAN, RESULT_PATH, EVENTS_ID, FIG_PATH
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -25,30 +25,37 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-def grand_ave_erp(task, cond) :
+def grand_ave_erp(task, conditions) :
     
     evoked_one_condition = []
 
-    for subj in SUBJ_CLEAN :
+    for cond in conditions : 
+        for subj in SUBJ_CLEAN :
 
-        print("processing -->", subj)
+            print("processing -->", subj)
 
-        # TODO : change with AR_epochs
-        _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
-        epochs = mne.read_epochs(path_epochs, verbose=None)
-        
-        # Drop EEg channels and equalize event number
-        evoked_one_condition.append(epochs[cond].average()) 
-        
-    evokeds_all_subj = mne.combine_evoked(evoked_one_condition, 'equal')
+            # TODO : change with AR_epochs
+            _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
+            epochs = mne.read_epochs(path_epochs, verbose=None)
+            
+            # Drop EEg channels and equalize event number
+            evoked_one_condition.append(epochs[cond].average()) 
+            
+        evokeds_all_subj = mne.combine_evoked(evoked_one_condition, 'equal')
 
-    evokeds_all_subj.save(RESULT_PATH + 'meg/reports/sub-all/erp/sub-all_task-{}_run-all_cond-{}_meas-grandave-ave.fif'.format(task, cond))
+        evokeds_all_subj.save(RESULT_PATH + 'meg/reports/sub-all/erp/sub-all_task-{}_run-all_cond-{}_meas-grandave-ave.fif'.format(task, cond), overwrite=True)
 
     return evokeds_all_subj
 
 if __name__ == "__main__" :
 
-    cond = args.condition
     task = args.task
 
-    grand_average_erp = grand_ave_erp(task, cond)
+    if task == 'LaughterActive':
+        conditions = ['LaughReal', 'LaughPosed', 'Good', 'Miss']
+
+    elif task == 'LaughterPassive':
+        conditions = ['LaughReal', 'LaughPosed', 'EnvReal', 'EnvPosed',
+                      'ScraReal', 'ScraPosed']
+
+    grand_average_erp = grand_ave_erp(task, conditions)
