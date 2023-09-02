@@ -33,10 +33,14 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
     or stage == "proc-clean_epo") : 
 
         extension = ".fif"
-
-        laughter_bidsname = "sub-{}_ses-recording_task-{}_{}{}".format(subj, task, stage, extension)
-        laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), 
-        "ses-recording", "meg", laughter_bidsname)
+        if run == 'all' :
+            laughter_bidsname = "sub-{}_ses-recording_task-{}_{}{}".format(subj, task, stage, extension)
+            laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), 
+            "ses-recording", "meg", laughter_bidsname)
+        else :
+            laughter_bidsname = "sub-{}_ses-recording_task-{}_run-{}_{}{}{}".format(subj, task, run, measure, stage, extension)
+            laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), 
+            "ses-recording", "meg", laughter_bidsname)
     
     elif stage == "proc-filt_raw" :
 
@@ -47,9 +51,10 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
 
     elif 'tfr' in stage :
         extension = '.h5'
+        folder = 'sub-' + subj
         
         laughter_bidsname = "sub-{}_ses-recording_task-{}_run-{}_{}{}".format(subj, task, run, stage, extension)
-        laughter_bidspath = os.path.join(BIDS_PATH, "sub-{}".format(subj), "ses-recording", "meg", laughter_bidsname)
+        laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
 
     # Epochs, ERPs and PSD files
     elif ("psd" in stage 
