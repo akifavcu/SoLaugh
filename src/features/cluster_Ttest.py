@@ -59,9 +59,12 @@ def compute_cluster_Ttest(SUBJ_CLEAN, task, cond1, cond2, bsl) :
             epochs = mne.read_epochs(path_epochs, verbose=None)
             epochs.equalize_event_counts([cond1, cond2]) 
 
+            evoked_cond1 = epochs[cond1].average()
+            evoked_cond2 = epochs[cond2].average()
+
             # Drop EEg channels and equalize event number
-            evoked_condition1.append(epochs[cond1].average()) 
-            evoked_condition2.append(epochs[cond2].average())
+            evoked_condition1.append(evoked_cond1) 
+            evoked_condition2.append(evoked_cond2)
 
             contrast = mne.combine_evoked([epochs[cond1].average(), epochs[cond2].average()], weights=[1, -1])
             contrast.pick_types(meg=True, ref_meg=False,  exclude='bads')
@@ -77,13 +80,14 @@ def compute_cluster_Ttest(SUBJ_CLEAN, task, cond1, cond2, bsl) :
             # TODO : change with AR_epochs
             _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
             epochs = mne.read_epochs(path_epochs, verbose=None)
-            #epochs.equalize_event_counts([cond1, cond2]) 
             
+            evoked_cond1 = epochs[cond1].average()
+
             # Take nb channel and time
             baseline_data = np.zeros((epochs.get_data().shape[1], epochs.get_data().shape[2]))
 
             # Drop EEg channels and equalize event number
-            evoked_condition1.append(epochs[cond1].average()) 
+            evoked_condition1.append(evoked_cond1) 
             baseline = mne.EvokedArray(baseline_data, epochs.info, tmin=-0.5, comment='baseline')
 
             contrast = mne.combine_evoked([epochs[cond1].average(), baseline], weights=[1, -1])

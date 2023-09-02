@@ -138,7 +138,7 @@ def cluster_ttest_psd(freq_name, condition, SUBJ_CLEAN, run_list, stage, task) :
 
         # Save cluster stats to use it later
         # TODO : save all subject evoked_cond1 et cond2 
-        conditions = cond1 + "-" + cond2
+        conditions = cond1 + "-" + cond2 + '-' + fname
 
         _, save_contrasts = get_bids_file(RESULT_PATH, stage = "psd-contrast", task=task, condition = conditions)
 
@@ -154,10 +154,10 @@ def cluster_ttest_psd(freq_name, condition, SUBJ_CLEAN, run_list, stage, task) :
 
 if __name__ == "__main__" :
 
-    task = 'LaughterActive'
+    task = args.task
     stage = 'psd_epo'
-    cond1 = 'LaughReal'
-    cond2 = 'LaughPosed'
+    cond1 = args.condition1
+    cond2 = args.condition2
 
     freq_name = FREQS_NAMES
     condition = [cond1, cond2] # assert 2 conditions

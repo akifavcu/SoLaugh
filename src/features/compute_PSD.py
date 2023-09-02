@@ -25,7 +25,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
+def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, task, FREQS_LIST) :
     
     power_list = []
     FREQS = [x for x in range(len(FREQS_LIST))]
@@ -56,6 +56,17 @@ def compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id, task, FREQS_LIST) :
                         
             for run in RUN_LIST :
                 print("=> Process run :", run)
+
+                if task == 'LaughterPassive' :
+                    if run == '02' or run == '03' :
+                        event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'EnvReal' : 21, 
+                                    'EnvPosed' : 22}
+                    elif run == '04' or run == '05' :
+                        event_id = {'LaughReal' : 11, 'LaughPosed' : 12,'ScraReal' : 31, 
+                                    'ScraPosed' : 32,}
+                if task == 'LaughterActive' :
+                        event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'Good' : 99, 'Miss' : 66}
+                        
                 
                 # Take raw data filtered : i.e. NO ICA 
                 _, raw_path = get_bids_file(PREPROC_PATH, stage='proc-filt_raw', task=task, run=run, subj=subj)
@@ -108,7 +119,7 @@ def compute_morlet_psd(SUBJ_CLEAN, task, event_id) :
         for subj in SUBJ_CLEAN:
             print("=> Process task :", task, 'subject', subj)
 
-            _, epo_path = get_bids_file(PREPROC_PATH, stage='proc-clean_epo', task=task, subj=subj)
+            _, epo_path = get_bids_file(RESULT_PATH, stage='AR_epo', task=task, subj=subj)
             epochs = mne.read_epochs(epo_path)
             epochs.pick_types(meg=True, ref_meg = False,  exclude='bads')
 
@@ -125,13 +136,11 @@ def compute_morlet_psd(SUBJ_CLEAN, task, event_id) :
                                 return_itc=False, decim=3, n_jobs=None)
         
         # Save power 
-        stage = 'psd'
+        stage = 'morlet-tfr'
         _, psd_path = get_bids_file(RESULT_PATH, 
                                     stage=stage, 
-                                    subj=subj, 
                                     task=task, 
-                                    condition = condition, 
-                                    measure='morlet')
+                                    condition = condition)
         power.save(psd_path, overwrite=True)
 
         # Plot topomaps
@@ -175,7 +184,7 @@ if __name__ == "__main__" :
                         'EnvPosed' : 22, 'ScraPosed' : 32,}
         
     if psd == 'hilbert' : 
-        epochs_psd = compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, event_id=event_id, task=task, FREQS_LIST=FREQS_LIST)
+        epochs_psd = compute_hilbert_psd(SUBJ_CLEAN, RUN_LIST, task=task, FREQS_LIST=FREQS_LIST)
     
     elif psd == 'morlet' : 
         power = compute_morlet_psd(SUBJ_CLEAN, task=task, event_id=event_id)
