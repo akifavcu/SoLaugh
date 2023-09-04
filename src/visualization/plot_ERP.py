@@ -36,7 +36,13 @@ parser.add_argument(
     type=str,
     help="Second condition",
 )
-
+parser.add_argument(
+    "-bsl",
+    "--baseline",
+    default=False,
+    type=bool,
+    help="Compute baseline",
+)
 args = parser.parse_args()
 
 def plot_gfp(condition1, condition2, cond1, cond2, task, picks) :
@@ -73,7 +79,7 @@ def plot_gfp(condition1, condition2, cond1, cond2, task, picks) :
     
 
 
-def visualize_cluster(contrast, cluster_stats, task, conditions, cond1, cond2) :
+def visualize_cluster(contrast, cluster_stats, task, conditions, cond1, cond2, baseline) :
     """
     Code adapted from : 
     https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
@@ -87,19 +93,28 @@ def visualize_cluster(contrast, cluster_stats, task, conditions, cond1, cond2) :
         
         _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
         epochs_AR = mne.read_epochs(path_epochs, verbose=None)
-        epochs_AR.filter(1, 30)
+        epochs_AR.filter(1, 20)
+
+        evoked_cond1 = epochs_AR[cond1].average()
         
+        evoked_cond1.apply_baseline(baseline=(None, 0))
+
         # Drop EEg channels and equalize event number
-        evoked_condition1.append(epochs_AR[cond1].average())
-        evoked_condition2.append(epochs_AR[cond2].average())
+        evoked_condition1.append(evoked_cond1)
 
     # Prepare data for plotting
+    if baseline == True : 
+        baseline_data = np.zeros((epochs_AR.get_data().shape[1], epochs_AR.get_data().shape[2]))
+        baseline_evoked = mne.EvokedArray(baseline_data, epochs_AR.info, tmin=-0.5, comment='baseline')
+        evoked_condition2.append(baseline_evoked)
+    else : 
+        evoked_cond2 = epochs_AR[cond2].average()
+        evoked_cond2.apply_baseline(baseline=(None, 0))
+        evoked_condition2.append(evoked_cond2)
+
     evokeds = {cond1 : evoked_condition1, cond2 : evoked_condition2}
 
-    """
-    Code adapted from : 
-    https://mne.tools/stable/auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html
-    """
+
     T_obs, clusters, p_values, _ = cluster_stats
 
     p_accept = 0.01
@@ -174,13 +189,14 @@ def visualize_cluster(contrast, cluster_stats, task, conditions, cond1, cond2) :
         # clean up viz
         mne.viz.tight_layout(fig=fig)
         fig.subplots_adjust(bottom=.05)
-        plt.savefig(FIG_PATH + 'clusters-erp/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_erp{}.png'.format(task, conditions, i_clu))
+        plt.savefig(FIG_PATH + 'clusters-erp/sub-all_run-all_task-{}_cond-{}_meas-Ttest-cluster_erp-apply-baseline{}.png'.format(task, conditions, i_clu))
 if __name__ == "__main__" :
 
     # Conditions and task to compute
     task = args.task
     cond1 = args.condition1
     cond2 = args.condition2
+    bsl = args.baseline
 
     conditions = cond1 + '-' + cond2
     condition_list = [cond1, cond2]
@@ -191,9 +207,9 @@ if __name__ == "__main__" :
 
     # Import clusters files path
 
-    _, save_clusters_stats = get_bids_file(RESULT_PATH, stage="erp-clusters", task=task, measure="Ttest-clusters", condition=conditions)
+    _, save_clusters_stats = get_bids_file(RESULT_PATH, stage="erp-clusters-apply-baseline", task=task, measure="Ttest-clusters", condition=conditions)
 
-    _, save_contrast = get_bids_file(RESULT_PATH, stage="erp-contrast", task=task, condition=conditions)
+    _, save_contrast = get_bids_file(RESULT_PATH, stage="erp-contrast-apply-baseline", task=task, condition=conditions)
 
     with open(save_clusters_stats, 'rb') as f:
         cluster_stats = pickle.load(f)
@@ -205,4 +221,4 @@ if __name__ == "__main__" :
     # plot_gfp(condition1, condition2, cond1, cond2, task, picks)
 
     # Visualization of ERP clusters
-    visualize_cluster(contrast, cluster_stats, task, conditions, cond1, cond2)
+    visualize_cluster(contrast, cluster_stats, task, conditions, cond1, cond2, baseline = bsl)
