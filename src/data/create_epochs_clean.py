@@ -57,6 +57,11 @@ def make_epochs(subj_list, task, run_list, tmin, tmax, event_id) :
                 # Read raw file 
                 events = mne.find_events(raw_filter)
 
+                if run == '02' or run == '03' :
+                    event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'EnvReal' : 21, 'EnvPosed' : 22}
+                elif run == '04' or run == '05' :
+                    event_id = {'LaughReal' : 11, 'LaughPosed' : 12, 'ScraReal' : 31,'ScraPosed' : 32,}
+
                 epochs = mne.Epochs(raw_filter,
                                     events=events,
                                     event_id=event_id,
