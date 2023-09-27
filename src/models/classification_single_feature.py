@@ -11,11 +11,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
-from sklearn.feature_selection import SequentialFeatureSelector
+from sklearn.model_selection import cross_val_score, ShuffleSplit, GroupShuffleSplit
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm
-from sklearn.model_selection import ShuffleSplit
 
 from mne.decoding import (
     SlidingEstimator,
@@ -163,11 +162,13 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, conditions, FREQS_NAMES
     power_list = []
     FREQS = [x for x in range(len(FREQS_LIST))]
     idx = 0 #TODO : Change that
+    
+    group = []
 
     for l_freq, h_freq in FREQS_LIST :
         print('Processing freqs -->', l_freq, h_freq)
         
-        for subj in subj_list:
+        for i_subj, subj in enumerate(subj_list):
             print("=> Process task :", task, 'subject', subj)
 
             sub_id = 'sub-' + subj
@@ -249,6 +250,7 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, conditions, FREQS_NAMES
 
                 epochs.equalize_event_counts(['LaughReal', 'LaughPosed'])
                 epochs_list.append(epochs)
+
                 del epochs
                 
         epochs_all_run = mne.concatenate_epochs(epochs_list)  
@@ -257,7 +259,6 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, conditions, FREQS_NAMES
         
         # Compute power (= envelop **2)
         print('Calculte power')
-
         ave_time_cond1 = np.mean(epochs_all_run[cond1].get_data(), axis=2)
         ave_time_cond2 = np.mean(epochs_all_run[cond2].get_data(), axis=2)
         
@@ -265,12 +266,18 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, conditions, FREQS_NAMES
         X_subj.append(np.concatenate((ave_time_cond1, ave_time_cond2)))
         y_subj.append(np.concatenate((epochs_all_run[cond1].events[:, 2], epochs_all_run[cond2].events[:, 2])))
 
+        for i_cond, cond in enumerate(X_subj[-1]) : 
+            group.append(i_subj)
+        
         print(X_subj[-1].shape)
         print(y_subj[-1].shape)
-
-        stage = 'ml-'+ str(tmin) + '-' + str(tmax)
+        print(np.array(group).shape)
+        
         sub_name = 'all'
         run_name = 'all'
+        tmin_name = str(int(tmin*1000))
+        tmax_name = str(int(tmax*1000))
+        stage = 'ml-'+ tmin_name + '-' + tmax_name
 
         save_X = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
                                                                                     run_name, conditions,
@@ -279,17 +286,24 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, conditions, FREQS_NAMES
         save_y = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
                                                                                     run_name, conditions,
                                                                                     'y-subj', stage)
-        with open(save_X, 'rb') as f:
-            X_subj = pickle.load(f)
+        save_group = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+                                                                                    run_name, conditions,
+                                                                                    'group', stage)
+        with open(save_X, 'wb') as f:
+            pickle.dump(X_subj, f)
     
-        with open(save_y, 'rb') as f:
-            y_subj = pickle.load(f)
+        with open(save_y, 'wb') as f:
+            pickle.dump(y_subj, f)
 
-        arr_scores = classif_single_chan(X_subj, y_subj) 
+        with open(save_group, 'wb') as f:
+            pickle.dump(group, f)
+
+
+        arr_scores = classif_single_chan(X_subj, y_subj, group) 
 
     return X_subj, y_subj
 
-def classif_single_chan(X_subj, y_subj) : 
+def classif_single_chan(X_subj, y_subj, group) : 
 
     CHAN = np.arange(0, 270, 1)
 
@@ -298,13 +312,15 @@ def classif_single_chan(X_subj, y_subj) :
     # Select the classifier & cross-val method
     clf = svm.SVC(kernel='linear', C=1, random_state=42)
 
-    cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
+    cv = GroupShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
         
     X = X_subj[-1] #X_subj[-1]
     print(X.shape)
 
     y = y_subj[-1]
     print(y.shape)
+
+    groups = np.array(group)
 
     X_random = np.random.rand(3240, 10)
 
@@ -318,7 +334,7 @@ def classif_single_chan(X_subj, y_subj) :
         print(X_chan.shape)
         print(X_classif.shape)
         
-        scores = cross_val_score(clf, X_classif, y, cv=cv)
+        scores = cross_val_score(clf, X=X_classif, y=y, groups=groups, cv=cv)
         print(scores)
         
         # Mean scores across cross-validation splits
@@ -330,6 +346,7 @@ def classif_single_chan(X_subj, y_subj) :
 
     # Put all scores into numpy
     arr_scores = np.array(scores_chan)
+    
 
     return arr_scores
     
@@ -360,11 +377,18 @@ if __name__ == "__main__" :
     time_decoding = False
 
     if time_decoding == True : 
-        X, y = prepare_data(subj_list, run_list, freq_name, cond1, cond2, classifier, clf_name)
+        X, y = prepare_data(subj_list, run_list, 
+                            freq_name, 
+                            cond1, cond2, 
+                            classifier, clf_name)
 
     elif hilbert_window == True : 
-        X_subj, y_subj, epochs_all_run = time_window_hilbert(subj_list, run_list, tmin, tmax, conditions, 
-                                                             FREQS_NAMES=[freq_name], FREQS_LIST=[FREQS_LIST[2]])
+        X_subj, y_subj, group, epochs_all_run = time_window_hilbert(subj_list, run_list, 
+                                                                    tmin, tmax, 
+                                                                    cond1, cond2,
+                                                                    FREQS_NAMES=[freq_name], 
+                                                                    FREQS_LIST=[FREQS_LIST[2]], 
+                                                                    save=True)
 
 
     
