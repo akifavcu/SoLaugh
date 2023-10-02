@@ -156,7 +156,7 @@ def plot_cluster_time(task, roi, conditions, cluster_stats, evoked_contrast, evo
     print('Plot')
     T_obs, clusters, p_values, _ = cluster_stats
 
-    p_accept = 0.001
+    p_accept = 0.05
     good_cluster_inds = np.where(p_values < p_accept)[0]
 
     # configure variables for visualization
@@ -169,15 +169,15 @@ def plot_cluster_time(task, roi, conditions, cluster_stats, evoked_contrast, evo
     task = task
     run = 'all'
     cond = conditions
-    meas = 'ttest-sluster'
+    meas = 'ttest-cluster'
     stage= roi + '-erp'
 
     save_fig_path = FIG_PATH + '/erp/ttest_time_cluster/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.png'.format(su,
-                                                                                                                              task,
-                                                                                                                              run,
-                                                                                                                              cond,
-                                                                                                                              meas,
-                                                                                                                              stage)
+                                                                                                            task,
+                                                                                                            run,
+                                                                                                            cond,
+                                                                                                            meas,
+                                                                                                            stage)
 
     # Prepare mask for topomaps
     ch_inds = []
@@ -226,7 +226,8 @@ def plot_cluster_time(task, roi, conditions, cluster_stats, evoked_contrast, evo
         # add new axis for time courses and plot time courses
         ax_signals = divider.append_axes('right', size='300%', pad=1.2)
 
-        title = 'Cluster #{0}, (p={1})'.format(i_clu + 1, p_values[clu_idx])
+        title = 'Cluster #{0}, (p={1}), ROI {2} - {3}'.format(i_clu + 1, p_values[clu_idx], 
+                                                              roi, cond)
 
         plot_compare_evokeds(evokeds, title=title,
                         colors=colors, show=False,axes=ax_signals,

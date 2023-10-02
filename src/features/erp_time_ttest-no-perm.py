@@ -160,9 +160,8 @@ def compute_ttest_times(task, roi, evoked_condition1_data, evoked_condition2_dat
 def plot_ttest_evoked(task, roi, p_vals, evokeds, cond1_data_ave, evoked_cond1_roi, correction, conditions) : 
     
     # Select pvalues sig.
-    pval_corrected = 0.05/len(np.transpose(cond1_data_ave, [1, 0])) #Number of time point
-    pval_corr = []
-    time_corr = []
+    plim = 0.01
+    pval_corrected = plim/len(np.transpose(cond1_data_ave, [1, 0])) #Number of time point
 
     su = 'all'
     task = task
@@ -172,28 +171,36 @@ def plot_ttest_evoked(task, roi, p_vals, evokeds, cond1_data_ave, evoked_cond1_r
     stage= roi + '-erp'
 
     save_fig_path = FIG_PATH + '/erp/ttest_no_cluster/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.png'.format(su,
-                                                                                                                              task,
-                                                                                                                              run,
-                                                                                                                              cond,
-                                                                                                                              meas,
-                                                                                                                              stage)
+                                                                                                            task,
+                                                                                                            run,
+                                                                                                            cond,
+                                                                                                            meas,
+                                                                                                            stage)
+
+    time_corr = []
+    pval_corr = []
 
     if correction == 'Bonferroni' :
-        print('Apply Boneferroni correction') # Boneferroni correction
+        print('Apply Bonferroni correction') # Boneferroni correction
         for i, pval in enumerate(p_vals) : 
             if pval < pval_corrected :
                 pval_corr.append(pval)
                 time_corr.append(evoked_cond1_roi.times[i])
-                
-    elif correction == 'FRD' :
+
+    elif correction == 'FDR' :
         print('Apply FDR correction') # FDR correction
-        for i, pval in enumerate(p_vals) :      
-            _, pval_corr = fdrcorrection(pval, 
-                        alpha=0.05)
-            time_corr.append(evoked_cond1_roi.times[i])
+
+        _, qval = fdrcorrection(p_vals, 
+                        alpha=plim)
+
+        for i, q in enumerate(qval) : 
+            if q < plim : 
+                time_corr.append(evoked_cond1_roi.times[i])
+                pval_corr.append(q)
 
     else : # No correction applied
         print("No correction applied")
+
         for i, pval in enumerate(p_vals) :      
             pval_corr.append(pval)
             time_corr.append(evoked_cond1_roi.times[i])
@@ -202,22 +209,26 @@ def plot_ttest_evoked(task, roi, p_vals, evokeds, cond1_data_ave, evoked_cond1_r
 
     fig, ax = plt.subplots(1, 1, figsize=(17, 5))
 
-    plot_compare_evokeds(evokeds,
+    title = 'Region of interest #{0}, (p<{1}), {2}'.format(roi, plim, conditions)
+
+    plot_compare_evokeds(evokeds, title=title,
                     colors=colors, show=False, axes=ax,
                     split_legend=True, truncate_yaxis='auto', combine="mean")
 
-    for i, val in enumerate(pval_corr):
-        sig_times = []
-        
-        # plot temporal cluster extent
-        sig_times.append(time_corr[i])
-        ymin, ymax = ax.get_ylim()
-        ax.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
-                            color='orange', alpha=0.3)
-    print('Save figure')
-    plt.savefig(save_fig_path)
-    plt.show()
-    
+    if len(pval_corr) != 0 :
+        for i, val in enumerate(pval_corr):
+            sig_times = []
+            
+            # plot temporal cluster extent
+            sig_times.append(time_corr[i])
+            ymin, ymax = ax.get_ylim()
+            ax.fill_betweenx((ymin, ymax), sig_times[0], sig_times[-1],
+                                color='orange', alpha=0.3)
+        print('Save figure')
+        plt.savefig(save_fig_path)
+    else : 
+        print('Save figure')
+        plt.savefig(save_fig_path)
 
 if __name__ == "__main__" :
 
