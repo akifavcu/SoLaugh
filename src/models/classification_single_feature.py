@@ -69,7 +69,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-def save_data(save, tmin, tmax, cond1, cond2, X_subj, y_subj, X_cond1, X_cond2, group) : 
+def save_data(save, tmin, tmax, cond1, cond2, X_subj, y_subj, X_cond1, X_cond2, group, freq_name) : 
     sub_name = 'all'
     run_name = 'all'
     tmin_name = str(int(tmin*1000))
@@ -77,24 +77,24 @@ def save_data(save, tmin, tmax, cond1, cond2, X_subj, y_subj, X_cond1, X_cond2, 
     stage = 'ml-'+ tmin_name + '-' + tmax_name
     conditions = cond1 + '-' + cond2
 
-    save_X = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+    save_X = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                         run_name, conditions,
-                                                                                                        'X-subj', stage)
-    save_y = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+                                                                                                        'X-subj', freq_name, stage)
+    save_y = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                         run_name, conditions,
-                                                                                                        'y-subj', stage)
+                                                                                                        'y-subj', freq_name, stage)
 
-    save_group = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+    save_group = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                             run_name, conditions,
-                                                                                                            'group', stage)
+                                                                                                            'group', freq_name, stage)
 
-    save_X1 = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+    save_X1 = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                         run_name, conditions,
-                                                                                                        'X-cond1', stage)
+                                                                                                        'X-cond1', freq_name, stage)
 
-    save_X2 = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+    save_X2 = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                         run_name, conditions,
-                                                                                                        'X-cond2', stage)
+                                                                                                        'X-cond2', freq_name, stage)
     with open(save_X, 'wb') as f:
         pickle.dump(X_subj, f)
 
@@ -110,32 +110,33 @@ def save_data(save, tmin, tmax, cond1, cond2, X_subj, y_subj, X_cond1, X_cond2, 
     with open(save_X2, 'wb') as f:
         pickle.dump(X_cond2, f)
 
-def upload_data(tmin, tmax, cond1, cond2) : 
+def upload_data(tmin, tmax, cond1, cond2, freq_name) : 
     sub_name = 'all'
     run_name = 'all'
     tmin_name = str(int(tmin*1000))
     tmax_name = str(int(tmax*1000))
-    stage = 'ml-'+ tmin_name + '-' + tmax_name
+    stage = tmin_name + '-' + tmax_name
     conditions = cond1 + '-' + cond2
 
-    save_X = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+    save_X = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                         run_name, conditions,
-                                                                                                        'X-subj', stage)
-    save_y = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+                                                                                                        'X-subj', freq_name, stage)
+    
+    save_y = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                         run_name, conditions,
-                                                                                                        'y-subj', stage)
+                                                                                                        'y-subj', freq_name, stage)
 
-    save_group = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+    save_group = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                             run_name, conditions,
-                                                                                                            'group', stage)
+                                                                                                            'group', freq_name, stage)
 
-    save_X1 = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+    save_X1 = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                         run_name, conditions,
-                                                                                                        'X-cond1', stage)
+                                                                                                        'X-cond1', freq_name, stage)
 
-    save_X2 = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+    save_X2 = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
                                                                                                         run_name, conditions,
-                                                                                                        'X-cond2', stage)
+                                                                                                        'X-cond2', freq_name, stage)
 
     with open(save_X, 'rb') as f:
         X_subj = pickle.load(f)
@@ -161,22 +162,16 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, cond1, cond2, FREQS_NAM
     print('Time window : ' + str(tmin) + '-' + str(tmax))
     epochs_list = []
 
-    y_run_cond1 = []
-    y_run_cond2 = []
-
     X_subj = []
     y_subj = []
 
     X_cond1 = []
     X_cond2 = []
     
-    power_list = []
     FREQS = [x for x in range(len(FREQS_LIST))]
-    idx = 0 #TODO : Change that
+    idx = 0 
     
     group = []
-
-    conditions = cond1 + '-' + cond2
 
     for l_freq, h_freq in FREQS_LIST :
         print('Processing freqs -->', l_freq, h_freq)
@@ -227,14 +222,12 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, cond1, cond2, FREQS_NAM
                 raw_filter = raw.copy()
                 raw_filter = ica.apply(raw_filter)
 
-                epochs_psds = []
-
                 freq_name = FREQS_NAMES[idx]
 
                 print('Apply filter')
                 info = raw_filter.info
-                raw_filter.filter(l_freq, h_freq) # Apply filter of interest
-                raw_hilbert = raw_filter.apply_hilbert(envelope=True)
+                raw_filter.filter(l_freq, h_freq, n_jobs=-1) # Apply filter of interest
+                raw_hilbert = raw_filter.apply_hilbert(envelope=True, n_jobs=-1)
 
                 picks = mne.pick_types(raw.info, meg=True, ref_meg=False, eeg=False, eog=False)
 
@@ -250,7 +243,7 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, cond1, cond2, FREQS_NAM
                     event_id=event_id,
                     tmin=tmin,
                     tmax=tmax,
-                    baseline=(0, 0),
+                    baseline=(tmin, tmin),
                     picks=picks)    
 
                 # Auto-reject epochs
@@ -261,8 +254,11 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, cond1, cond2, FREQS_NAM
                 else:
                     epochs.info['dev_head_t'] = head_info
 
-                epochs.equalize_event_counts(['LaughReal', 'LaughPosed'])
+                epochs.equalize_event_counts([cond1, cond2]) # Equalize event count
                 epochs_list.append(epochs)
+
+                for i_cond, cond in enumerate(epochs[cond1, cond2].get_data()) : 
+                    group.append(i_subj)
 
                 del epochs
                 
@@ -281,23 +277,20 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, cond1, cond2, FREQS_NAM
         print('Concatenation')
         X_subj.append(np.concatenate((ave_time_cond1, ave_time_cond2)))
         y_subj.append(np.concatenate((epochs_all_run[cond1].events[:, 2], epochs_all_run[cond2].events[:, 2])))
-
-        for i_cond, cond in enumerate(X_subj[-1]) : 
-            group.append(i_subj)
         
         print(X_subj[-1].shape)
         print(y_subj[-1].shape)
         print(np.array(group).shape)
         
 
-        if save == True : 
-            save_data(save, tmin, tmax, cond1, cond2, X_subj, y_subj, X_cond1, X_cond2, group)
+    if save == True : 
+        save_data(save, tmin, tmax, cond1, cond2, X_subj, y_subj, X_cond1, X_cond2, group, freq_name)
 
-        arr_scores = classif_single_chan(X_subj, y_subj, group, tmin, tmax) 
+    arr_scores = classif_single_chan(X_subj, y_subj, group, tmin, tmax, freq_name) 
 
-    return X_subj, y_subj
+    return X_subj, y_subj, group
 
-def classif_single_chan(X_subj, y_subj, group, tmin, tmax) : 
+def classif_single_chan(X_subj, y_subj, group, tmin, tmax, freq_name) : 
 
     CHAN = np.arange(0, 270, 1)
 
@@ -310,6 +303,7 @@ def classif_single_chan(X_subj, y_subj, group, tmin, tmax) :
     print(y.shape)
 
     groups = np.array(group)
+    print(group)
 
     for chan in CHAN :
         print('-->Process channel :', chan)
@@ -348,12 +342,12 @@ def classif_single_chan(X_subj, y_subj, group, tmin, tmax) :
     run_name = 'all'
     tmin_name = str(int(tmin*1000))
     tmax_name = str(int(tmax*1000))
-    stage = 'ml-'+ tmin_name + '-' + tmax_name
+    stage = tmin_name + '-' + tmax_name
     conditions = cond1 + '-' + cond2
 
-    save_scores = RESULT_PATH + 'meg/reports/sub-all/ml/results_single_feat/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.pkl'.format(sub_name, task, 
+    save_scores = RESULT_PATH + 'meg/reports/sub-all/ml/results_single_feat/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq_{}{}.pkl'.format(sub_name, task, 
                                                                                                                                 run_name, conditions,
-                                                                                                                                'scores', stage)
+                                                                                                                                'scores', freq_name, stage)
     with open(save_scores, 'wb') as f:
         pickle.dump(all_scores, f)
     
@@ -392,7 +386,7 @@ if __name__ == "__main__" :
             frequency_list.append(FREQS_LIST[i])
 
     if compute_hilbert == True : 
-        X_subj, y_subj, group, epochs_all_run = time_window_hilbert(subj_list, run_list, 
+        X_subj, y_subj, group = time_window_hilbert(subj_list, run_list, 
                                                                     tmin, tmax, 
                                                                     cond1, cond2,
                                                                     FREQS_NAMES=[freq_name], 
@@ -400,7 +394,7 @@ if __name__ == "__main__" :
                                                                     save=True)
     else :
         upload=True
-        upload_data(tmin, tmax, cond1, cond2)
+        upload_data(tmin, tmax, cond1, cond2, freq_name)
 
 
 
