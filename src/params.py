@@ -3,10 +3,12 @@ import os
 
 # Paths 
 DISK_PATH = "/home/claraelk/scratch/laughter_data/0_RAW_DATA/"
-BIDS_PATH = "/home/claraelk/scratch/laughter_data/bids_data/"
-PREPROC_PATH = "/home/claraelk/scratch/laughter_data/preproc/"
+BIDS_PATH = "/home/claraelk/scratch/laughter_data/laugh_bids_data/"
+PREPROC_PATH = "/home/claraelk/scratch/laughter_data/preproc_bids_data/"
 RESULT_PATH = "/home/claraelk/scratch/laughter_data/results/"
 PERF_PATH = "/run/media/clara_elk/Clara_Seagate/SoLaugh_MSc/PERF/solaugh_task/results_active/"
+MRI_SCAN = "/home/claraelk/scratch/laughter_data/results/mri/anat/subjects"
+MRI_PATH = "/home/claraelk/scratch/laughter_data/results/mri/"
 BEHAV_PATH = RESULT_PATH + "discrimination/behavior"
 FIG_PATH = RESULT_PATH + "meg/reports/figures/"
 
