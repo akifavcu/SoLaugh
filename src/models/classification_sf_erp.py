@@ -148,7 +148,7 @@ def upload_data(tmin, tmax, cond1, cond2) :
 
     arr_scores = classif_single_chan(X_subj, y_subj, group, tmin, tmax)
 
-    return X_subj, y_subj, X_cond1, X_cond2
+    return X_subj, y_subj, group, X_cond1, X_cond2
 
 def prepare_erps(subj_list, tmin, tmax, cond1, cond2, save=True) :
     
@@ -318,7 +318,7 @@ if __name__ == "__main__" :
     condition_list = [cond1, cond2]
 
     if compute_erp == True : 
-        X_subj, y_subj, group = prepare_erps(subj_list, 
+        X_subj, y_subj, group, X_cond1, X_cond2 = prepare_erps(subj_list, 
                                             tmin, tmax, 
                                             cond1, cond2,
                                             save=True)
