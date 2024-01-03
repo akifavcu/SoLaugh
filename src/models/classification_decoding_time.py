@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import cross_val_score, ShuffleSplit, GroupShuffleSplit
+from sklearn.model_selection import cross_val_score, ShuffleSplit, GroupShuffleSplit, LeaveOneGroupOut
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm
@@ -123,9 +123,9 @@ def decoding_time(X, y, classifier, cond1, cond2, clf_name, epochs, sfs=True) :
 
     # TODO : put savepoint 
     # We will train the classifier on all left visual vs auditory trials on MEG
-    sfs = SequentialFeatureSelector(classifier, n_features_to_select=5)
-
-    clf = make_pipeline(StandardScaler(), sfs, classifier)
+    # sfs = SequentialFeatureSelector(classifier, n_features_to_select=5)
+    cv = LeaveOneGroupOut() # Cross-validation via LOGO
+    clf = make_pipeline(cv, classifier)
 
     time_decod = SlidingEstimator(clf, scoring="roc_auc", verbose=True, n_jobs=-1)
     # here we use cv=3 just for speed
@@ -145,7 +145,7 @@ def decoding_time(X, y, classifier, cond1, cond2, clf_name, epochs, sfs=True) :
     ax.axvline(0.0, color="k", linestyle="-")
     ax.set_title("Sensor space decoding")
 
-    plt.savefig(FIG_PATH + 'ml/sub-01_task-{}_run-all_cond-{}_meas-decoding-time_{}-5_features-.png'.format(task, conditions, clf_name))
+    plt.savefig(FIG_PATH + 'ml/sub-01_task-{}_run-all_cond-{}_meas-decoding-time_{}.png'.format(task, conditions, clf_name))
 
 if __name__ == "__main__" :
 
@@ -169,8 +169,8 @@ if __name__ == "__main__" :
     classifier = LogisticRegression(solver="liblinear")
     clf_name = 'LR'
 
-    if time_decoding == True : 
-        X, y = prepare_data(subj_list, run_list, 
+
+    X, y = prepare_data(subj_list, run_list, 
                             freq_name, 
                             cond1, cond2, 
                             classifier, clf_name)

@@ -11,7 +11,14 @@ import mne
 
 # ML
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.model_selection import RandomizedSearchCV, LeaveOneGroupOut
+from sklearn.model_selection import RandomizedSearchCV, LeaveOneGroupOut, cross_val_score, permutation_test_score
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import svm
+from sklearn.linear_model import LogisticRegression, LinearRegression
+
 
 
 parser = argparse.ArgumentParser()
@@ -54,8 +61,8 @@ parser.add_argument(
 parser.add_argument(
     "-compute_erp",
     "--compute_erp",
-    default=True,
-    type=bool,
+    default='True',
+    type=str,
     help="Weither or not processing erp",
 )
 args = parser.parse_args()
@@ -203,93 +210,167 @@ def prepare_erps(subj_list, tmin, tmax, cond1, cond2, save=True) :
 
     
     return X_subj, y_subj, group, X_cond1, X_cond2
-
+    
 def classif_single_chan(X_subj, y_subj, group,  tmin, tmax) : 
     
-    ########## PREPARE DATA ###########
     CHAN = np.arange(0, 270, 1)
+    norm = 1
+    randomSearch=False
 
-    all_scores = []
+    all_scores = {}
+    score_list = []
+    perm_list = []
+    pval_list = []
 
     # Select the classifier & cross-val method
-    X = X_subj[-1] #X_subj[-1]
+    X = X_subj[-1]
     print(X.shape)
-    X = X*10e26
 
     y = np.array(y_subj)
     print(y.shape)
 
     groups = np.array(group)
 
-    ############ CLASSIFICATION #############    
-    for chan in CHAN :
-        print('-->Process channel :', chan)
+    if randomSearch == False : 
+        ############ CLASSIFICATION #############    
+        for chan in CHAN :
+            print('-->Process channel :', chan)
 
-        y_pred = []
+            clf = GradientBoostingClassifier()
+            cv = LeaveOneGroupOut() # Cross-validation via LOGO
 
-        clf = RandomForestClassifier()
-        # Number of trees in random forest
-        n_estimators = [int(x) for x in np.linspace(start = 10, stop = 200, num = 10)]
-        # Number of features to consider at every split
-        max_features = ['sqrt']
-        # Maximum number of levels in tree
-        max_depth = [2, 5, 10, 15]
-        # Minimum number of samples required to split a node
-        min_samples_split = [10, 20, 25]
-        # Minimum number of samples required at each leaf node
-        min_samples_leaf = [1, 2, 3, 4, 5]
-        # Method of selecting samples for training each tree
-        bootstrap = [True, False]
+            if norm == 1:
+                scaler = StandardScaler()
+                pipeline = Pipeline([("scaler", scaler), ("classifier", clf)])
+            else:
+                pipeline = clf
 
-        # Create the param grid
-        param_grid = {'n_estimators': n_estimators,
-                    'max_features': max_features,
-                    'max_depth': max_depth,
-                    'min_samples_split': min_samples_split,
-                    'min_samples_leaf': min_samples_leaf,
-                    'bootstrap': bootstrap}
-        print(param_grid)
+            # Select channel of interest
+            X_chan = X[:, chan]
+            X_classif = X_chan.reshape(-1, 1) # Reshape (n_event, 1)
+            print(X_classif.shape)
 
-        cv = LeaveOneGroupOut() # Cross-validation via LOGO
+            # Find best params with GridSearch
+            # Use RandomSearch
+            print('---->Find best params')
+            scores, permutation_scores, p_value = permutation_test_score(pipeline, X_classif, y, cv=cv, 
+                                                                         groups=groups, n_jobs=-1)
+            print(scores)
+            print(permutation_scores)
+            print(p_value)
 
-        # Select channel of interest
-        X_chan = X[:, chan]
-        X_classif = X_chan.reshape(-1, 1) # Reshape (n_event, 1)
-        print(X_classif.shape)
+            score_list.append(scores)
+            perm_list.append(permutation_scores)
+            pval_list.append(p_value)
 
-        # Find best params with GridSearch
-        # Use RandomSearch
-        print('---->Find best params')
-        search = RandomizedSearchCV(clf, param_grid, cv=cv, verbose=True, n_jobs=-1, n_iter=50).fit(X=X_classif, 
-                                                                                        y=y, 
-                                                                                        groups=groups)
+        all_scores['score'] = score_list
+        all_scores['permutation'] = perm_list
+        all_scores['pval'] = pval_list
 
-        # Select best params
-        best_params = search.best_estimator_
-        print('Best params : ' + str(best_params))
+        print('Save file')
+        sub_name = 'all'
+        run_name = 'all'
+        tmin_name = str(int(tmin*1000))
+        tmax_name = str(int(tmax*1000))
+        stage = tmin_name + '-' + tmax_name 
+        conditions = cond1 + '-' + cond2
+        score = 'scores-xgboost-perm'
 
-        # Accuracy score
-        scores = search.score(X=X_classif, y=y) 
-        print('Scores', scores)
+        save_scores = RESULT_PATH + 'meg/reports/sub-all/ml/erp/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_{}.pkl'.format(sub_name, task, 
+                                                                                                                        run_name, conditions,
+                                                                                                                        score, stage)
+        with open(save_scores, 'wb') as f:
+            pickle.dump(all_scores, f)
+            
+    else : 
 
-        all_scores.append(scores)
+        ############ CLASSIFICATION #############    
+        for chan in CHAN :
 
-    print(all_scores)
+            print('-->Process channel :', chan)
 
-    sub_name = 'all'
-    run_name = 'all'
-    tmin_name = str(int(tmin*1000))
-    tmax_name = str(int(tmax*1000))
-    stage = tmin_name + '-' + tmax_name 
-    conditions = cond1 + '-' + cond2
-    score = 'scores-rdm_forest'
+            clf =  RandomForestClassifier()
+            cv = LeaveOneGroupOut() # Cross-validation via LOGO
 
-    save_scores = RESULT_PATH + 'meg/reports/sub-all/ml/erp/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_{}.pkl'.format(sub_name, task, 
-                                                                                                                                run_name, conditions,
-                                                                                                                                score, stage)
-    with open(save_scores, 'wb') as f:
-        pickle.dump(all_scores, f)
-    
+            # Select channel of interest
+            X_chan = X[:, chan]
+            X_classif = X_chan.reshape(-1, 1) # Reshape (n_event, 1)
+            print(X_classif.shape)
+
+            # Define the parameter grid for RandomizedSearchCV
+            '''param_grid = {
+                'classifier__C': [0.001, 0.01, 0.1, 1, 10, 100],
+                'classifier__penalty': ['l1', 'l2'],
+                'classifier__solver': ['liblinear']
+            }
+
+            param_grid = {
+            'classifier__C': [0.001, 0.01, 0.1, 1, 10, 100],
+            'classifier__kernel': ['linear', 'rbf', 'poly'],
+            'classifier__gamma': ['scale', 'auto', 0.1, 0.01, 0.001],}'''
+            
+            param_grid = {
+            'classifier__n_estimators': [50, 100, 200, 300],
+            'classifier__max_depth': [None, 10, 20, 30],
+            'classifier__min_samples_split': [2, 5, 10],
+            'classifier__min_samples_leaf': [1, 2, 4],
+            'classifier__bootstrap': [True, False]
+        }
+
+
+            # Create the pipeline
+            pipeline = Pipeline([
+                ('scaler', StandardScaler()),  # Standardization
+                ('classifier', clf),  #  Classifier
+            ])
+            # Create the RandomizedSearchCV
+            random_search = RandomizedSearchCV(
+                pipeline,
+                param_distributions=param_grid,
+                scoring='accuracy',  # Change this to the appropriate metric
+                cv=cv.split(X_classif, groups=groups),  
+                n_iter=10,  
+                n_jobs=-1  
+            )
+
+            # Fit the pipeline with RandomizedSearchCV
+            random_search.fit(X_classif, y)
+
+            # Access the best estimator and its parameters
+            best_pipeline = random_search.best_estimator_
+            best_params = random_search.best_params_
+
+            # Now, use permutation_test_score
+            scores, permutation_scores, p_value = permutation_test_score(
+                best_pipeline, X_classif, y, groups=groups, cv=cv.split(X_classif, groups=groups), n_permutations=100, n_jobs=-1)
+
+            # Display the results
+            print("Best Parameters: ", best_params)
+            print("Permutation Test Score: ", scores)
+            score_list.append(scores)
+            perm_list.append(permutation_scores)
+            pval_list.append(p_value)
+        
+        all_scores['score'] = score_list
+        all_scores['permutation'] = perm_list
+        all_scores['pval'] = pval_list
+
+        print('Save file')
+        sub_name = 'all'
+        run_name = 'all'
+        tmin_name = str(int(tmin*1000))
+        tmax_name = str(int(tmax*1000))
+        stage = tmin_name + '-' + tmax_name 
+        conditions = cond1 + '-' + cond2
+        score = 'scores-rdm_forest-perm-rdmSearch'
+
+        save_scores = RESULT_PATH + 'meg/reports/sub-all/ml/erp/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_{}.pkl'.format(sub_name, task, 
+                                                                                                                        run_name, conditions,
+                                                                                                                        score, stage)
+        with open(save_scores, 'wb') as f:
+            pickle.dump(all_scores, f)
+
+
     return all_scores
 
 if __name__ == "__main__" :
@@ -317,10 +398,10 @@ if __name__ == "__main__" :
     # Select what conditions to compute
     condition_list = [cond1, cond2]
 
-    if compute_erp == True : 
+    if compute_erp == 'True' : 
         X_subj, y_subj, group, X_cond1, X_cond2 = prepare_erps(subj_list, 
                                             tmin, tmax, 
                                             cond1, cond2,
                                             save=True)
-    elif compute_erp == False :
+    elif compute_erp == 'False' :
         upload_data(tmin, tmax, cond1, cond2)

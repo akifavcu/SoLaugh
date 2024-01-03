@@ -5,7 +5,8 @@ import os
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
-from autoreject import AutoReject
+from autoreject import AutoReject, get_rejection_threshold
+import pickle 
 from src.utils import get_bids_file
 from src.params import RESULT_PATH, PREPROC_PATH, SUBJ_CLEAN, ACTIVE_RUN, PASSIVE_RUN, FIG_PATH, EVENTS_ID
 
@@ -75,10 +76,19 @@ def make_epochs(subj_list, task, run_list, tmin, tmax, event_id) :
                 ar = AutoReject()
                 epochs_clean = ar.fit_transform(epochs)  
                 epochs_clean.apply_baseline((None,0)) # apply baseline
+
+                # Export in dict epochs rejected
+                reject = get_rejection_threshold(epochs)  
+                print('Autoreject: Done')  
                 
-                print("--> save file")
+                print("--> save files")
                 _, save_path = get_bids_file(PREPROC_PATH, subj=subj, task=task, run=run, measure='clean-', stage='epo')
                 epochs_clean.save(save_path, overwrite=True)
+
+                _, save_AR = get_bids_file(RESULT_PATH, stage="AR_epo", task=task, subj=subj, measure='threshold', run=run)
+                with open(save_AR, 'wb') as f:
+                    pickle.dump(reject, f)
+
                 print("--> Done")
 
 

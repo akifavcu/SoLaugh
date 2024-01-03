@@ -46,7 +46,7 @@ def compute_foof(task, conditions) :
     cond2_exponent = {}
 
     for i_cond, cond in enumerate(conditions) :
-        print('condition -->', cond)
+        print('condition -->', cond, i_cond)
             
         for subj in SUBJ_CLEAN :
             print('sub-', subj)
@@ -85,9 +85,9 @@ def compute_foof(task, conditions) :
                 chan_spectrum.append(np.array(data_ave[i_chan]))
 
             print(len(chan_spectrum)) # Length must be n_chan
-
+            print('Apply FOOOF')
             for i_spec, spec in enumerate(chan_spectrum) :
-
+                
                 fm = FOOOF()
 
                 # Set the frequency range to fit the model
@@ -107,8 +107,11 @@ def compute_foof(task, conditions) :
             print('Save sub-', subj)
             if i_cond == 0 : 
                 cond1_exponent[subj] = all_exponent
-            else :
+            elif i_cond == 1:
                 cond2_exponent[subj] = all_exponent
+
+    print('Cond1', len(cond1_exponent))
+    print('Cond2', len(cond2_exponent))
 
     # Save files
     filename_cond1 = 'sub-all_task-{}_run-all_cond-{}_meas-fooof-exponent.pkl'.format(task, conditions[0])
@@ -134,24 +137,24 @@ def ttest_fooof(cond1_exponent, cond2_exponent, epochs, conditions) :
         cond1_list.append(cond1_exponent[subj])
         cond2_list.append(cond2_exponent[subj])
 
-        cond1_data = np.array(cond1_list)
-        cond2_data = np.array(cond2_list)
+    cond1_data = np.array(cond1_list)
+    cond2_data = np.array(cond2_list)
 
-        print(cond1_data.shape)
-        print(cond2_data.shape)
+    print(cond1_data.shape)
+    print(cond2_data.shape)
 
-        cond1_data = np.transpose(cond1_data, [1, 0])
-        cond2_data = np.transpose(cond2_data, [1, 0])
+    cond1_data = np.transpose(cond1_data, [1, 0])
+    cond2_data = np.transpose(cond2_data, [1, 0])
 
-        report = "channel={i_ch}, t({df})={t_val:.3f}, p={p:.3f}"
-        print("\nTargeted statistical test results:")
+    report = "channel={i_ch}, t({df})={t_val:.3f}, p={p:.3f}"
+    print("\nTargeted statistical test results:")
 
-        p_vals = []
-        x_time = []
+    p_vals = []
+    x_time = []
 
-        correction = 'FDR'
-        ch_corr = []
-        pval_corr = []
+    correction = 'FDR'
+    ch_corr = []
+    pval_corr = []
 
     for i_ch, ch in enumerate(cond1_data):
 

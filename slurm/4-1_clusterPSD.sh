@@ -6,4 +6,4 @@
 
 module load python/3.10
 
-$HOME/laughter_meg/bin/python $HOME/projects/def-kjerbi/claraelk/SoLaugh/src/features/cluster_psd.py -task=LaughterPassive
+$HOME/laughter_meg/bin/python $HOME/projects/def-kjerbi/claraelk/SoLaugh/src/features/cluster_psd.py -task=LaughterActive -cond1=LaughReal -cond2=Good

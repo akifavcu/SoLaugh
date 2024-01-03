@@ -6,4 +6,4 @@
 
 module load python/3.10
 
-$HOME/laughter_meg/bin/python $HOME/projects/def-kjerbi/claraelk/SoLaugh/src/features/gfp.py --task=LaughterPassive --dondition1=EnvReal --condition2=EnvPosed
+$HOME/laughter_meg/bin/python $HOME/projects/def-kjerbi/claraelk/SoLaugh/src/features/gfp.py --task=LaughterPassive --condition1=ScraReal --condition2=ScraPosed

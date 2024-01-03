@@ -6,4 +6,4 @@
 
 module load python/3.10
 
-$HOME/laughter_meg/bin/python $HOME/projects/def-kjerbi/claraelk/SoLaugh/src/visualization/plot_ERP.py --task=LaughterPassive
+$HOME/laughter_meg/bin/python $HOME/projects/def-kjerbi/claraelk/SoLaugh/src/visualization/plot_ERP.py --task=LaughterPassive --condition1=EnvPosed --condition2=BaselineZero --baseline=True

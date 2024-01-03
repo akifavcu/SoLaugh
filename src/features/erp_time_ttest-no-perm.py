@@ -160,14 +160,14 @@ def compute_ttest_times(task, roi, evoked_condition1_data, evoked_condition2_dat
 def plot_ttest_evoked(task, roi, p_vals, evokeds, cond1_data_ave, evoked_cond1_roi, correction, conditions) : 
     
     # Select pvalues sig.
-    plim = 0.01
+    plim = 0.05
     pval_corrected = plim/len(np.transpose(cond1_data_ave, [1, 0])) #Number of time point
 
     su = 'all'
     task = task
     run = 'all'
     cond = conditions
-    meas = 'ttest-no-perm-corr' + correction
+    meas = 'ttest-no-perm-corr' + correction + '-' + str(plim)[2:]
     stage= roi + '-erp'
 
     save_fig_path = FIG_PATH + '/erp/ttest_no_cluster/sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}.png'.format(su,

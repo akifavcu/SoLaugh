@@ -9,11 +9,15 @@ from src.params import SUBJ_CLEAN, RESULT_PATH, ACTIVE_RUN, PASSIVE_RUN, FIG_PAT
 from src.utils import get_bids_file
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score, ShuffleSplit, RandomizedSearchCV, GridSearchCV, LeaveOneGroupOut
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.model_selection import cross_val_score, ShuffleSplit, RandomizedSearchCV, LeaveOneGroupOut
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm
+from sklearn.metrics import confusion_matrix
+
+
+import pandas as pd
 
 
 parser = argparse.ArgumentParser()
@@ -65,7 +69,7 @@ parser.add_argument(
     "--compute_hilbert",
     default=True,
     type=bool,
-    help="Wwither or not computing Hilbert",
+    help="Weither or not computing Hilbert",
 )
 args = parser.parse_args()
 
@@ -115,7 +119,7 @@ def upload_data(tmin, tmax, cond1, cond2, freq_name) :
     run_name = 'all'
     tmin_name = str(int(tmin*1000))
     tmax_name = str(int(tmax*1000))
-    stage = tmin_name + '-' + tmax_name
+    stage = 'ml-'+ tmin_name + '-' + tmax_name
     conditions = cond1 + '-' + cond2
 
     save_X = RESULT_PATH + 'meg/reports/sub-all/ml/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq-{}_{}.pkl'.format(sub_name, task, 
@@ -153,7 +157,7 @@ def upload_data(tmin, tmax, cond1, cond2, freq_name) :
     with open(save_X2, 'rb') as f:
         X_cond2 = pickle.load(f)
 
-    arr_scores = classif_single_chan(X_subj, y_subj, group, tmin, tmax)
+    arr_scores = classif_single_chan(X_subj, y_subj, group, tmin, tmax, freq_name=freq_name)
 
     return X_subj, y_subj, X_cond1, X_cond2
 
@@ -298,6 +302,7 @@ def classif_single_chan(X_subj, y_subj, group, tmin, tmax, freq_name) :
 
     X = X_subj[-1] #X_subj[-1]
     print(X.shape)
+    X = X*10e26
 
     y = y_subj[-1]
     print(y.shape)
@@ -307,26 +312,56 @@ def classif_single_chan(X_subj, y_subj, group, tmin, tmax, freq_name) :
 
     for chan in CHAN :
         print('-->Process channel :', chan)
-        
+
         y_pred = []
-        
-        parameters = {'kernel':('linear', 'rbf',  'rbf', 'sigmoid'), 'C':[1, 10]}
-        clf = svm.SVC()
-        
+
+        clf = RandomForestClassifier()
+        # Number of trees in random forest
+        n_estimators = [int(x) for x in np.linspace(start = 10, stop = 200, num = 10)]
+        # Number of features to consider at every split
+        max_features = ['sqrt']
+        # Maximum number of levels in tree
+        max_depth = [2, 5, 10, 15]
+        # Minimum number of samples required to split a node
+        min_samples_split = [10, 20, 25]
+        # Minimum number of samples required at each leaf node
+        min_samples_leaf = [1, 2, 3, 4, 5]
+        # Method of selecting samples for training each tree
+        bootstrap = [True, False]
+
+        # Create the param grid
+        param_grid = {'n_estimators': n_estimators,
+                    'max_features': max_features,
+                    'max_depth': max_depth,
+                    'min_samples_split': min_samples_split,
+                    'min_samples_leaf': min_samples_leaf,
+                    'bootstrap': bootstrap}
+        print(param_grid)
+
         cv = LeaveOneGroupOut() # Cross-validation via LOGO
-        
+
         # Select channel of interest
         X_chan = X[:, chan]
         X_classif = X_chan.reshape(-1, 1) # Reshape (n_event, 1)
         print(X_classif.shape)
-        
+
         # Find best params with GridSearch
         # Use RandomSearch
         print('---->Find best params')
-        search = RandomizedSearchCV(clf, parameters, cv=cv, verbose=True, n_jobs=-1).fit(X=X_classif, 
+        search = RandomizedSearchCV(clf, param_grid, cv=cv, verbose=True, n_jobs=-1, n_iter=50).fit(X=X_classif, 
                                                                                         y=y, 
                                                                                         groups=groups)
-            
+
+        print(search)
+        y_pred = search.predict(X_classif)
+        # Print scores for each fold
+        print('Scores for each fold:')
+        for i, score in enumerate(search.cv_results_['split0_test_score']):
+            print(f'Fold {i + 1}: {score}')
+
+        df = pd.DataFrame.from_dict(search.cv_results_)
+        print(df.head())
+
         # Select best params
         best_params = search.best_estimator_
         print('Best params : ' + str(best_params))
@@ -334,20 +369,28 @@ def classif_single_chan(X_subj, y_subj, group, tmin, tmax, freq_name) :
         # Accuracy score
         scores = search.score(X=X_classif, y=y) 
         print('Scores', scores)
-        #print('Best scores', scores.best_score_)
-        
-        all_scores.append(scores)
+        print('Best scores', search.best_score_)
 
+        feature_importance = search.best_estimator_.feature_importances_
+        print('Feature Importance:', feature_importance)    
+
+        y_true = y
+        #y_pred = [0, 0, 2, 2, 0, 2]
+        print(confusion_matrix(y_true, y_pred))
+
+        all_scores.append(scores)
+        
     sub_name = 'all'
     run_name = 'all'
     tmin_name = str(int(tmin*1000))
     tmax_name = str(int(tmax*1000))
-    stage = tmin_name + '-' + tmax_name
+    stage = tmin_name + '-' + tmax_name 
     conditions = cond1 + '-' + cond2
+    score = 'scores-rdm_forest'
 
     save_scores = RESULT_PATH + 'meg/reports/sub-all/ml/results_single_feat/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq_{}{}.pkl'.format(sub_name, task, 
                                                                                                                                 run_name, conditions,
-                                                                                                                                'scores', freq_name, stage)
+                                                                                                                                score, freq_name, stage)
     with open(save_scores, 'wb') as f:
         pickle.dump(all_scores, f)
     
@@ -355,6 +398,7 @@ def classif_single_chan(X_subj, y_subj, group, tmin, tmax, freq_name) :
     
 if __name__ == "__main__" :
 
+    print('TEST')
     subj_list = SUBJ_CLEAN
     task = args.task
 
@@ -370,7 +414,8 @@ if __name__ == "__main__" :
     tmax = args.tmax
 
     # Weither or not to compute hilbert or upload data
-    compute_hilbert = args.compute_hilbert
+    compute_hilbert = False
+    print(compute_hilbert)
 
     if task == 'LaughterActive' :
         run_list = ACTIVE_RUN
@@ -392,8 +437,7 @@ if __name__ == "__main__" :
                                                                     FREQS_NAMES=[freq_name], 
                                                                     FREQS_LIST=frequency_list, 
                                                                     save=True)
-    else :
-        upload=True
+    elif compute_hilbert == False :
         upload_data(tmin, tmax, cond1, cond2, freq_name)
 
 

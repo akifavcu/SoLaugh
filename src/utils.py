@@ -62,7 +62,7 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
     or stage == "AR_epo"
     or stage == "log_AR_epo"):
 
-        folder = 'sub-' + subj
+        subject_folder = 'sub-' + subj 
         if measure == 'log' or measure == 'log_fooof':
             extension = '.pkl'
         else :
@@ -73,23 +73,23 @@ def get_bids_file(BIDS_PATH, stage, subj='all', run='all', task = "LaughterActiv
                 laughter_bidsname = "sub-{}_task-{}_run-{}_cond-{}_{}{}".format(subj, task, run, 
                                                                                 condition, stage, extension)
 
-                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", subject_folder, laughter_bidsname)
             else :
                 laughter_bidsname = "sub-{}_task-{}_run-{}_cond-{}_meas-{}_{}{}".format(subj, task, 
                                                                                         run, condition,
                                                                                         measure, stage, extension)
-                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", subject_folder, laughter_bidsname)
         else :
             if measure == None :
                 laughter_bidsname = "sub-{}_task-{}_run-{}_{}{}".format(subj, task, run, 
                                                                         stage, extension)
 
-                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", subject_folder, laughter_bidsname)
             else :
                 laughter_bidsname = "sub-{}_task-{}_run-{}_meas-{}_{}{}".format(subj, task, 
                                                                                 run,
                                                                                 measure, stage, extension)
-                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", folder, laughter_bidsname)
+                laughter_bidspath = os.path.join(BIDS_PATH, "meg", "reports", subject_folder, laughter_bidsname)
 
 
     return laughter_bidsname, laughter_bidspath

@@ -6,4 +6,4 @@
 
 module load python/3.10
 
-$HOME/laughter_meg/bin/python $HOME/projects/def-kjerbi/claraelk/SoLaugh/src/data/create_epochs_clean.py --subject=$1
+$HOME/laughter_meg/bin/python $HOME/projects/def-kjerbi/claraelk/SoLaugh/src/data/create_epochs_clean.py --subject=01

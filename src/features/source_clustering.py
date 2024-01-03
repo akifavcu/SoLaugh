@@ -49,6 +49,14 @@ parser.add_argument(
     type=bool,
     help="Save file",
 )
+parser.add_argument(
+    "-compute_cluster",
+    "--compute_cluster",
+    default='True',
+    type=str,
+    help="Compute cluster",
+)
+
 args = parser.parse_args()
 
 def prepare_source_erp(subj_list, task, cond1, cond2, save=True) :
@@ -56,26 +64,24 @@ def prepare_source_erp(subj_list, task, cond1, cond2, save=True) :
     ####### PREPARE DATA #######
 
     # Loop through subjects
-    all_subject_stcs_cond1 = []
-    all_subject_stcs_cond2 = []
-
     all_stc_cond1 = []
     all_stc_cond2 = []
-
-    group_all_stc_cond1 = []
-    group_all_stc_cond2 = []
 
     task = task
     cond1_name = cond1
     cond2_name = cond2
 
     for subj in subj_list:
-        _, epo_path = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
-        epochs = mne.read_epochs(epo_path)
+        _, path_epochs = get_bids_file(RESULT_PATH, task=task, subj=subj, stage="AR_epo")
+        epochs = mne.read_epochs(path_epochs, verbose=None)
 
         # Find condition related to epoch
         cond1_epo = []
         cond2_epo = []
+        
+        all_stc_cond1 = []
+
+        all_stc_cond2 = []
         for i, epo_arr in enumerate(epochs.events): 
             if epo_arr[2] == 3 :                
                 cond1_epo.append(i)
@@ -86,104 +92,45 @@ def prepare_source_erp(subj_list, task, cond1, cond2, save=True) :
         cond2 = [str(nb).zfill(3) for nb in cond2_epo]
         print('Cond1', len(cond1))
         print('Cond2', len(cond2))
+        
+        # Find morph data of the same condition
+        for epo1 in cond1 : # Cond1
+            stc_path_cond1 = os.path.join(MRI_PATH, f'sub-{subj}', 'morph',
+                                        f'{epo1}_MNE_morph-stc.h5')
 
-        for epo1 in cond1 : 
-            stc_path_cond1 = os.path.join(MRI_PATH, f'sub-{subj}', 'src',
-                                        f'{epo1}_MNE_source-stc.h5')
-            
             stc_cond1 = mne.read_source_estimate(stc_path_cond1)
             all_stc_cond1.append(stc_cond1)
 
-        for epo2 in cond2 : 
-            stc_path_cond2 = os.path.join(MRI_PATH, f'sub-{subj}', 'src',
-                                        f'{epo2}_MNE_source-stc.h5')
-            
+        for epo2 in cond2 : # Cond2
+            stc_path_cond2 = os.path.join(MRI_PATH, f'sub-{subj}', 'morph',
+                                        f'{epo2}_MNE_morph-stc.h5')
+
             stc_cond2 = mne.read_source_estimate(stc_path_cond2)
             all_stc_cond2.append(stc_cond2)
 
-        print(len(all_stc_cond1)) 
-        print(len(all_stc_cond2))  
-
-        ######## AVERAGE SIGNAL PER CONDITION FOR 1 SUBJ #########
-        for subject_stcs1 in all_stc_cond1 : 
-
-            # Average the SourceEstimates for the current subject
-            avg_data_cond1 = np.mean([s.data for s in all_stc_cond1], axis=0)
-            avg_stc_cond1 = mne.SourceEstimate(avg_data_cond1, 
-                                            vertices=stc_cond1.vertices, 
-                                            tmin=stc_cond1.tmin, 
-                                            tstep=stc_cond1.tstep, 
-                                            subject='sub-all')
-
-            # Append to the list for all subjects
-            all_subject_stcs_cond1.append(avg_stc_cond1)
-
-        print('All subj cond1 :', len(all_subject_stcs_cond1))
-
-
-        for subject_stcs2 in all_stc_cond2 : 
-
-            # Average the SourceEstimates for the current subject
-            avg_data_cond2 = np.mean([s.data for s in all_stc_cond2], axis=0)
-            avg_stc_cond2 = mne.SourceEstimate(avg_data_cond2, 
-                                            vertices=stc_cond2.vertices, 
-                                            tmin=stc_cond2.tmin, 
-                                            tstep=stc_cond2.tstep, 
-                                            subject='sub-all')
-
-            # Append to the list for all subjects
-            all_subject_stcs_cond2.append(avg_stc_cond2)
-
-        print('All subj cond2 :', len(all_subject_stcs_cond2))
-
-        # Average 1 subject CONDITION 1
-        group_avg_data_cond1 = np.mean([s.data for s in all_subject_stcs_cond1], axis=0)
-        group_avg_stc_cond1 = mne.SourceEstimate(group_avg_data_cond1, 
-                                                vertices=avg_stc_cond1.vertices, 
-                                                tmin=avg_stc_cond1.tmin, 
-                                                tstep=avg_stc_cond1.tstep, 
-                                                subject=avg_stc_cond1.subject)
-
-        # Average 1 subject CONDITION 2
-        group_avg_data_cond2 = np.mean([s.data for s in all_subject_stcs_cond2], axis=0)
-        group_avg_stc_cond2 = mne.SourceEstimate(group_avg_data_cond2, 
-                                                vertices=avg_stc_cond2.vertices, 
-                                                tmin=avg_stc_cond2.tmin, 
-                                                tstep=avg_stc_cond2.tstep, 
-                                                subject=avg_stc_cond2.subject)
+        # Average 1 suibject for each condition
+        grand_ave_cond1 = np.mean(all_stc_cond1) 
+        grand_ave_cond2 = np.mean(all_stc_cond2) 
         
-        group_all_stc_cond1.append(group_avg_stc_cond1.data)
-        group_all_stc_cond2.append(group_avg_stc_cond2.data)
-        
-    print(np.array(group_all_stc_cond1).shape)
-    print(np.array(group_all_stc_cond2).shape)
-    
-    contrast = np.array(group_all_stc_cond1)-np.array(group_all_stc_cond2) 
-    
+        print(grand_ave_cond1.data.shape)
+        print(grand_ave_cond2.data.shape)
+
     # Save file
     if save == True :
         print('Save contrast, cond1 & cond2')
         conditions = cond1_name + "-" + cond2_name
 
-        filename_contrast, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-src-contrast', condition=conditions)
-        filename_cond1, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-src-contrast', condition=cond1_name)
-        filename_cond2, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-src-contrast', condition=cond2_name)
+        filename_cond1, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-morph-src', condition=cond1_name)
+        filename_cond2, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-morph-src', condition=cond2_name)
 
-        save_contrasts = os.path.join(MRI_PATH, 'sub-all', filename_contrast)
+        save_cond1 = os.path.join(MRI_PATH, f'sub-{subj}', filename_cond1[:-4])
+        save_cond2 = os.path.join(MRI_PATH, f'sub-{subj}', filename_cond2[:-4])
 
-        save_cond1 = os.path.join(MRI_PATH, 'sub-all', filename_cond1)
-        save_cond2 = os.path.join(MRI_PATH, 'sub-all', filename_cond2)
+        grand_ave_cond1.save(save_cond1, ftype='h5', overwrite=True)
+        grand_ave_cond2.save(save_cond2, ftype='h5',  overwrite=True)
 
-        with open(save_contrasts, 'wb') as f:
-            pickle.dump(contrast, f)  
 
-        with open(save_cond1, 'wb') as f:
-            pickle.dump(group_all_stc_cond1, f)  
-
-        with open(save_cond2, 'wb') as f:
-            pickle.dump(group_all_stc_cond2, f) 
-
-    return contrast, conditions
+    return grand_ave_cond1, grand_ave_cond2, conditions
 
 def cluster_source(task, cond1_name, cond2_name) :
 
@@ -192,35 +139,33 @@ def cluster_source(task, cond1_name, cond2_name) :
     group_all_stc_cond2 =[]
     conditions = cond1_name + "-" + cond2_name
 
+    crop = True
+    tmin = 0.0
+    tmax = 1.5
+
     ##### Import data
     for subj in SUBJ_CLEAN :
-        filename_contrast, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-morph-contrast', condition=conditions)
-        filename_cond1, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-morph-contrast', condition=cond1_name)
-        filename_cond2, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-morph-contrast', condition=cond2_name)
+        filename_cond1, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-morph-src', condition=cond1_name)
+        filename_cond2, _ = get_bids_file(RESULT_PATH, subj=subj, task=task, stage='erp-morph-src', condition=cond2_name)
 
-        save_contrasts = os.path.join(MRI_PATH, 'sub-all', filename_contrast)
+        save_cond1 = os.path.join(MRI_PATH, f'sub-{subj}', filename_cond1[:-4])
+        save_cond2 = os.path.join(MRI_PATH, f'sub-{subj}', filename_cond2[:-4])
 
-        save_cond1 = os.path.join(MRI_PATH, 'sub-all', filename_cond1)
-        save_cond2 = os.path.join(MRI_PATH, 'sub-all', filename_cond2)
+        stc_cond1 = mne.read_source_estimate(save_cond1)
+        stc_cond2 = mne.read_source_estimate(save_cond2)
 
-        with open(save_contrasts, 'rb') as f:
-            contrast_subj = pickle.load(f)  
+        if crop == True : 
+            stc_cond1.crop(tmin, tmax)
+            stc_cond2.crop(tmin, tmax)
 
-        with open(save_cond1, 'rb') as f:
-            group_all_stc_cond1_subj = pickle.load(f)  
-
-        with open(save_cond2, 'rb') as f:
-            group_all_stc_cond2_subj = pickle.load(f) 
-    
-        contrast_data.append(contrast_subj)
-        group_all_stc_cond1.append(group_all_stc_cond1_subj[0])
-        group_all_stc_cond2.append(group_all_stc_cond2_subj[0])
+        group_all_stc_cond1.append(stc_cond1.data)
+        group_all_stc_cond2.append(stc_cond2.data)
 
     ###### Compute contrast
     contrast = np.array(group_all_stc_cond1)-np.array(group_all_stc_cond2) 
     print('Shape contrast :', contrast.shape)
 
-    ###### Compute adjacency
+    ###### Compute adjacency #######
     src_fname = os.path.join(MRI_PATH, 'anat/subjects', 'fsaverage/bem', 'fsaverage-5-src.fif')
 
     src = mne.read_source_spaces(src_fname)
@@ -238,6 +183,9 @@ def cluster_source(task, cond1_name, cond2_name) :
     n_subjects = len(contrast)
     print(n_subjects)
 
+
+    ########### STATISTICAL ANALYSIS ##########
+
     # Here we set a cluster forming threshold based on a p-value for
     # the cluster based permutation test.
     # We use a two-tailed threshold, the "1 - p_threshold" is needed
@@ -245,6 +193,7 @@ def cluster_source(task, cond1_name, cond2_name) :
     p_threshold = 0.001
     df = n_subjects - 1  # degrees of freedom for the test
     t_threshold = stats.distributions.t.ppf(1 - p_threshold / 2, df=df)
+    n_perm = 1024
 
     # Now let's actually do the clustering. This can take a long time...
     print("Clustering.")
@@ -252,13 +201,12 @@ def cluster_source(task, cond1_name, cond2_name) :
         X,
         adjacency=adjacency,
         n_jobs=-1,
-        threshold=t_threshold,
+        threshold=None,
         buffer_size=None,
         verbose=True,
-        n_permutations=1024,
+        n_permutations= n_perm,
         tail=0,
-        step_down_p = 0.05,
-        check_disjoint=True,
+        check_disjoint=False,
         out_type='indices'
     )
     
@@ -268,20 +216,27 @@ def cluster_source(task, cond1_name, cond2_name) :
     print(good_clusters)
 
     print('Saving cluster')
-    save_cluster_stats, _ = get_bids_file(RESULT_PATH, stage = "erp-source", task=task, measure="Ttest-clusters-threshold", condition = conditions)
+    if crop == False : 
+        save_cluster_stats, _ = get_bids_file(RESULT_PATH, stage = "erp-src", task=task, 
+                                              measure=f"Ttest-clusters-morph-perm-{n_perm}", 
+                                              condition = conditions)
 
+    else :
+        save_cluster_stats, _ = get_bids_file(RESULT_PATH, stage = "erp-src", task=task, 
+                                              measure=f"Ttest-clusters-morph-perm-{n_perm}_time{tmin}-{tmax}", 
+                                              condition = conditions)
+        
     path_save_cluster = os.path.join(MRI_PATH, 'sub-all', save_cluster_stats)
 
     with open(path_save_cluster, 'wb') as f:
         pickle.dump(clu, f)  
 
-    print('Save done')
+    print('Save done - no disjoint')
 
     return clu
 
 if __name__ == "__main__" :
-    
-    # Select subjects and runs and stage
+ # Select subjects and runs and stage
     task = args.task
     subj_list = [args.subj]
 
@@ -291,13 +246,14 @@ if __name__ == "__main__" :
     cond2 = args.condition2
     condition_list = [cond1, cond2]
 
-    compute_cluster = False
+    compute_cluster = args.compute_cluster
+    print(compute_cluster)
     
     print("=> Process task :", task, "for conditions :", cond1, "&", cond2)
 
     # Compute ERP clusters
-    if compute_cluster == False : 
-        contrast, conditions = prepare_source_erp(subj_list, task, cond1, cond2, save)
+    if compute_cluster == 'False' : 
+        grand_ave_cond1, grand_ave_cond2, conditions = prepare_source_erp(subj_list, task, cond1, cond2, save)
 
-    elif compute_cluster == True: 
+    elif compute_cluster == 'True': 
         clu = cluster_source(task, cond1, cond2)

@@ -183,7 +183,7 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, cond1, cond2, FREQS_NAM
             group = []
             
             sub_id = 'sub-' + subj
-            subj_path = os.path.join(RESULT_PATH, 'meg', 'reports', sub_id, 'ml')
+            subj_path = os.path.join(RESULT_PATH, 'meg', 'reports', sub_id, 'ml', 'results_single_feat')
 
             if not os.path.isdir(subj_path):
                 os.mkdir(subj_path)
@@ -286,10 +286,10 @@ def time_window_hilbert(subj_list, RUN_LIST, tmin, tmax, cond1, cond2, FREQS_NAM
             print(np.array(group).shape)
             
 
-        if save == True : 
-            save_data(subj, save, tmin, tmax, cond1, cond2, X_subj, y_subj, X_cond1, X_cond2, group, freq_name)
+            if save == True : 
+                save_data(subj, save, tmin, tmax, cond1, cond2, X_subj, y_subj, X_cond1, X_cond2, group, freq_name)
 
-        arr_scores = classif_single_chan(subj, X_subj, y_subj, group, tmin, tmax, freq_name) 
+            arr_scores = classif_single_chan(subj, X_subj, y_subj, group, tmin, tmax, freq_name) 
 
     return X_subj, y_subj, group
 

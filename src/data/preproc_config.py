@@ -1,6 +1,7 @@
 import matplotlib
 from src.params import BIDS_PATH, PREPROC_PATH, ACTIVE_RUN, PASSIVE_RUN
 import sys
+import os
 
 print(sys.argv)
 matplotlib.use('agg')
@@ -9,14 +10,18 @@ matplotlib.use('agg')
 # Config parameters
 # -----------------
 
-## TODO : NEED TO ADD EMPTY ROOM
-
+user = os.path.expanduser('~')
 interactive = True
 on_error = 'debug'
 
 study_name = 'Solaugh'
-bids_root = BIDS_PATH
-deriv_root = PREPROC_PATH
+bids_root = os.path.join(user, 'scratch', 'laughMEG_bids')
+deriv_root = os.path.join(user, 'scratch', 'laughter_data', 'preprocessing',
+                          'preproc_erp_resample')
+random_state = 42
+
+if os.path.exists(deriv_root) == False : 
+    os.mkdir(deriv_root)
 
 # Take arguments if exist
 list_argv = sys.argv
@@ -56,10 +61,10 @@ process_empty_room = False
 
 # Filtering
 mf_cal_fname = None
-l_freq = 1.
-h_freq = 120. # Need to notch at 60 Hz
+l_freq = 0.1
+h_freq = 30. 
 notch_freq = [60, 120]
-#raw_resample_sfreq = 250
+raw_resample_sfreq = 600
 
 # Artifact correction.
 spatial_filter = 'ica'
@@ -69,7 +74,7 @@ ica_n_components = 0.99
 ica_reject_components = 'auto'
 
 # Epochs
-epochs_tmin = -0.5
+epochs_tmin = -0.1
 epochs_tmax = 1.5
 baseline = (None, 0)
 
@@ -80,11 +85,11 @@ if task == "LaughterActive" :
     event_repeated = 'drop'
 
     # Decoding
-    decode = False
-    # contrasts = [('LaughReal', 'LaughPosed')]
+    decode = True
+    contrasts = [('LaughReal', 'LaughPosed')]
 
     # Time-frequency analysis 
-    # time_frequency_conditions = ['LaughPosed', 'LaughReal']
+    # time_frequency_conditions = ['LaughPosed', 'LaughReal', 'Good', 'Miss']
     decoding_csp = False
 
 elif task == "LaughterPassive" :
@@ -93,8 +98,8 @@ elif task == "LaughterPassive" :
     event_repeated = 'drop'
     
     # Decoding
-    decode = False
-    # contrasts = [('EnvReal', 'EnvPosed')]
+    decode = True
+    contrasts = [('LaughReal', 'LaughPosed')]
 
     # Time-frequency analysis 
     # time_frequency_conditions = ['EnvReal', 'ScraReal', 'EnvPosed','ScraPosed']

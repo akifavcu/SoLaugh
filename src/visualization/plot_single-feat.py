@@ -55,12 +55,19 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-def plot_sf(sub_name, run_name, stage, conditions) :
+def plot_sf(sub_name, run_name, stage, conditions, freq_name) :
     ######## PLOT TOPOMAPS ########
 
-    fig_save = FIG_PATH + 'ml/results_single_feat/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq_{}{}.jpeg'.format(sub_name, task, 
+    # check if PATH exists, if not, create it
+    if not os.path.isdir(FIG_PATH + 'ml/results_single_feat/'):
+        os.mkdir(FIG_PATH + 'ml/results_single_feat/')
+        print("Flder created at : {}".format(FIG_PATH + 'ml/results_single_feat/'))
+    else:
+        print("{} already exists.".format(FIG_PATH + 'ml/results_single_feat/'))
+
+    fig_save = FIG_PATH + 'ml/results_single_feat/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq_{}{}.png'.format(sub_name, task, 
                                                                                                                 run_name, conditions,
-                                                                                                                'scores', freq_name, stage)
+                                                                                                                'scores-svm', freq_name, stage)
 
     
     # Load one epoch for channel info
@@ -75,13 +82,13 @@ def plot_sf(sub_name, run_name, stage, conditions) :
         # Load data
         save_scores = RESULT_PATH + 'meg/reports/sub-all/ml/results_single_feat/sub-{}_task-{}_run-{}_cond-{}_meas-sf-{}_freq_{}{}.pkl'.format(sub_name, task, 
                                                                                                                                 run_name, conditions,
-                                                                                                                                'scores', freq_name, stage)
+                                                                                                                                'scores-svm', freq_name, stage)
         with open(save_scores, 'rb') as f:
             all_scores = pickle.load(f)
 
         img, _ = mne.viz.plot_topomap(all_scores, epochs.info, axes=ax_topo[i], show=False, 
-                                cmap='bwr', extrapolate='head',
-                                sphere=(0, 0.0, 0, 0.19), vlim = (0, 1),)
+                                cmap='plasma_r', extrapolate='head',
+                                sphere=(0, 0.0, 0, 0.19), vlim=(None, None))
         
         ax_topo[i].set_title(freq_name)    
         
@@ -92,7 +99,6 @@ def plot_sf(sub_name, run_name, stage, conditions) :
         cbar.set_label('Accuracy')
 
     plt.savefig(fig_save)
-    plt.show(fig_save)
 
 if __name__ == "__main__" :
 
@@ -105,8 +111,8 @@ if __name__ == "__main__" :
         run_list = PASSIVE_RUN
 
     # Select what conditions to compute (str)
-    cond1 = args.cond1
-    cond2 = args.cond2
+    cond1 = args.condition1
+    cond2 = args.condition2
     freq_name = args.freq
     conditions = cond1 + '-' + cond2
     condition_list = [cond1, cond2]
@@ -114,16 +120,11 @@ if __name__ == "__main__" :
     tmin = args.tmin
     tmax = args.tmax
 
-    frequency_list = []
-    for i, freq in enumerate(FREQS_NAMES) : 
-        if freq == freq_name :
-            frequency_list.append(FREQS_LIST[i])
-
     sub_name = 'all'
     run_name = 'all'
     tmin_name = str(int(tmin*1000))
     tmax_name = str(int(tmax*1000))
-    stage = 'ml-' + tmin_name + '-' + tmax_name
+    stage = tmin_name + '-' + tmax_name
     conditions = cond1 + '-' + cond2
 
-    plot_sf(sub_name, run_name, stage, conditions)
+    plot_sf(sub_name, run_name, stage, conditions, freq_name)
